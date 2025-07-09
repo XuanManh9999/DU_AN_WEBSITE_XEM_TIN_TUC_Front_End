@@ -5,16 +5,25 @@ import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
 } from "@ant-design/icons";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import URL from "../../../utils/url";
+import { forgotPassword, verifyOtpForgotPassword } from "../../../services/auth";
+import { showToast } from "../../../utils/toast";
+
 const { Title, Text } = Typography;
 
 export default function ForgotPassword() {
+  const navigate = useNavigate();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [countdown, setCountdown] = useState(90);
   const [isCountdownActive, setIsCountdownActive] = useState(false);
   const [email, setEmail] = useState("");
   const [otpValues, setOtpValues] = useState(["", "", "", "", "", ""]);
+  const [loadingStates, setLoadingStates] = useState({
+    sendingEmail: false,
+    verifyingOtp: false,
+    resendingOtp: false,
+  });
 
   useEffect(() => {
     let interval = null;
@@ -28,19 +37,33 @@ export default function ForgotPassword() {
     return () => clearInterval(interval);
   }, [isCountdownActive, countdown]);
 
-  const onFinish = (values) => {
-    console.log("Email submitted: ", values.email);
-    setEmail(values.email);
-    setIsModalVisible(true);
-    setCountdown(90);
-    setIsCountdownActive(true);
-    message.success("Mã OTP đã được gửi đến email của bạn!");
+  const onFinish = async (values) => {
+    setLoadingStates({ ...loadingStates, sendingEmail: true });
+
+    try {
+      const response = await forgotPassword(values.email);
+
+      if (response?.status === 200) {
+        setEmail(values.email);
+        setIsModalVisible(true);
+        setCountdown(90);
+        setIsCountdownActive(true);
+        showToast.success("Mã OTP đã được gửi đến email của bạn!");
+      } else {
+        showToast.error(response?.message || "Có lỗi xảy ra. Vui lòng thử lại!");
+      }
+    } catch (error) {
+      showToast.error("Không thể gửi email. Vui lòng thử lại!");
+    } finally {
+      setLoadingStates({ ...loadingStates, sendingEmail: false });
+    }
   };
 
   const handleOtpChange = (index, value) => {
-    if (value.length <= 1 && /^\d*$/.test(value)) {
+    // Allow both letters and numbers
+    if (value.length <= 1 && /^[a-zA-Z0-9]*$/.test(value)) {
       const newOtpValues = [...otpValues];
-      newOtpValues[index] = value;
+      newOtpValues[index] = value.toUpperCase(); // Convert to uppercase for consistency
       setOtpValues(newOtpValues);
 
       // Auto focus next input
@@ -58,27 +81,60 @@ export default function ForgotPassword() {
     }
   };
 
-  const handleOtpSubmit = () => {
+  const handleOtpSubmit = async () => {
     const otpCode = otpValues.join("");
-    if (otpCode.length === 6) {
-      console.log("OTP submitted: ", otpCode);
-      message.success(
-        "Xác thực thành công! Vui lòng kiểm tra email để đặt lại mật khẩu."
-      );
-      setIsModalVisible(false);
-      // Reset form
-      setOtpValues(["", "", "", "", "", ""]);
-      setIsCountdownActive(false);
-    } else {
-      message.error("Vui lòng nhập đầy đủ 6 số OTP!");
+    if (otpCode.length !== 6) {
+      showToast.error("Vui lòng nhập đầy đủ 6 ký tự OTP!");
+      return;
+    }
+
+    setLoadingStates({ ...loadingStates, verifyingOtp: true });
+
+    try {
+      const response = await verifyOtpForgotPassword(email, otpCode);
+
+      if (response?.status === 200) {
+        setIsModalVisible(false);
+        showToast.success("Xác thực thành công! Vui lòng kiểm tra email để đặt lại mật khẩu.");
+
+        // Reset form
+        setOtpValues(["", "", "", "", "", ""]);
+        setIsCountdownActive(false);
+        setEmail("");
+
+        // Redirect to login page after successful verification
+        setTimeout(() => {
+          navigate(URL.AUTH.LOGIN);
+        }, 2000);
+      } else {
+        showToast.error(response?.message || "Mã OTP không đúng. Vui lòng thử lại!");
+      }
+    } catch (error) {
+      showToast.error("Có lỗi xảy ra khi xác thực OTP!");
+    } finally {
+      setLoadingStates({ ...loadingStates, verifyingOtp: false });
     }
   };
 
-  const handleResendOtp = () => {
-    setCountdown(90);
-    setIsCountdownActive(true);
-    setOtpValues(["", "", "", "", "", ""]);
-    message.success("Mã OTP mới đã được gửi!");
+  const handleResendOtp = async () => {
+    setLoadingStates({ ...loadingStates, resendingOtp: true });
+
+    try {
+      const response = await forgotPassword(email);
+
+      if (response?.status === 200) {
+        setCountdown(90);
+        setIsCountdownActive(true);
+        setOtpValues(["", "", "", "", "", ""]);
+        showToast.success("Mã OTP mới đã được gửi!");
+      } else {
+        showToast.error("Không thể gửi lại mã OTP. Vui lòng thử lại!");
+      }
+    } catch (error) {
+      showToast.error("Có lỗi xảy ra khi gửi lại mã OTP!");
+    } finally {
+      setLoadingStates({ ...loadingStates, resendingOtp: false });
+    }
   };
 
   const formatTime = (seconds) => {
@@ -171,6 +227,7 @@ export default function ForgotPassword() {
                 <Button
                   type="primary"
                   htmlType="submit"
+                  loading={loadingStates.sendingEmail}
                   className="w-full h-12 bg-gradient-to-r from-purple-500 to-pink-600 border-0 rounded-lg font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
                   Gửi mã xác thực
                 </Button>
@@ -228,8 +285,9 @@ export default function ForgotPassword() {
                 value={value}
                 onChange={(e) => handleOtpChange(index, e.target.value)}
                 onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                className="w-12 h-12 text-center text-xl font-bold rounded-lg border-2 border-gray-200 focus:border-purple-500"
+                className="w-12 h-12 text-center text-xl font-bold rounded-lg border-2 border-gray-200 focus:border-purple-500 uppercase"
                 maxLength={1}
+                placeholder="•"
               />
             ))}
           </div>
@@ -246,6 +304,7 @@ export default function ForgotPassword() {
               <Button
                 type="link"
                 onClick={handleResendOtp}
+                loading={loadingStates.resendingOtp}
                 className="text-purple-500 hover:text-purple-700 font-medium p-0">
                 Gửi lại mã OTP
               </Button>
@@ -255,6 +314,7 @@ export default function ForgotPassword() {
           <Button
             type="primary"
             onClick={handleOtpSubmit}
+            loading={loadingStates.verifyingOtp}
             className="w-full h-12 bg-gradient-to-r from-purple-500 to-pink-600 border-0 rounded-lg font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300">
             Xác thực
           </Button>

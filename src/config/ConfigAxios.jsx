@@ -8,7 +8,7 @@ export const setAxiosInactivityHandler = (resetFn) => {
 };
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:8000",
+  baseURL: "http://localhost:8080",
 });
 
 let isAlertShown = false;
@@ -46,7 +46,7 @@ axiosInstance.interceptors.response.use(
 
       try {
         const res = await axios.get(
-          "http://localhost:8000/api/v1/auth/access_token_by_refresh_token",
+          "http://localhost:8080/api/v1/auth/access_token_by_refresh_token",
           {
             headers: {
               Authorization: `Bearer ${refreshToken}`,

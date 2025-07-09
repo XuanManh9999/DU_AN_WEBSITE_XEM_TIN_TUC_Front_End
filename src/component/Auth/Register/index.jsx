@@ -1,22 +1,228 @@
-import React from "react";
-import { Button, Card, Form, Input, Typography, Divider, Checkbox } from "antd";
+import React, { useState, useEffect } from "react";
+import { Button, Card, Form, Input, Typography, Divider, Checkbox, Modal, message } from "antd";
 import {
   UserOutlined,
   LockOutlined,
   MailOutlined,
   EyeInvisibleOutlined,
   EyeTwoTone,
+  CheckCircleOutlined,
 } from "@ant-design/icons";
 import { FcGoogle } from "react-icons/fc";
-import { FaGithub } from "react-icons/fa";
 
 const { Title, Text } = Typography;
-import { Link } from "react-router-dom";
 import URL from "../../../utils/url";
+import Cookies from "js-cookie";
+import { Link, useNavigate } from "react-router-dom";
+import { register, verifyOtpRegister, oauthLogin } from "../../../services/auth";
+import { showToast } from "../../../utils/toast";
+import { useDispatch } from "react-redux";
+import { setUser } from "../../../redux/action/userAction";
+import { getCurrentUser } from "../../../services/user";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "../../../helper/filebase";
 
 export default function Register() {
-  const onFinish = (values) => {
-    console.log("Received values of form: ", values);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [dataRegister, setDataRegister] = useState({
+    email: "",
+    username: "",
+    password: "",
+  });
+  const [configLoadding, setConfigLoadding] = useState({
+    registerLoadding: false,
+    loginLoaddingGoogle: false,
+    otpLoading: false,
+  });
+
+  // OTP Modal states
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [countdown, setCountdown] = useState(90);
+  const [isCountdownActive, setIsCountdownActive] = useState(false);
+  const [otpValues, setOtpValues] = useState(["", "", "", "", "", ""]);
+
+  // Countdown effect for OTP
+  useEffect(() => {
+    let interval = null;
+    if (isCountdownActive && countdown > 0) {
+      interval = setInterval(() => {
+        setCountdown((countdown) => countdown - 1);
+      }, 1000);
+    } else if (countdown === 0) {
+      setIsCountdownActive(false);
+    }
+    return () => clearInterval(interval);
+  }, [isCountdownActive, countdown]);
+
+  const onFinish = async (values) => {
+    await handleRegister();
+  };
+
+  const handleOnChangeRegister = (e) => {
+    setDataRegister({ ...dataRegister, [e.target.name]: e.target.value });
+  };
+
+  const handleRegister = async () => {
+    setConfigLoadding({ ...configLoadding, registerLoadding: true });
+
+    try {
+      const response = await register(dataRegister);
+
+      if (response?.status === 200) {
+        setIsModalVisible(true);
+        setCountdown(90);
+        setIsCountdownActive(true);
+        showToast.success("Mã OTP đã được gửi đến email của bạn!");
+      } else {
+        showToast.error(response?.message || "Đăng ký thất bại. Vui lòng thử lại!");
+      }
+    } catch (error) {
+      showToast.error("Có lỗi xảy ra. Vui lòng thử lại!");
+    } finally {
+      setConfigLoadding({ ...configLoadding, registerLoadding: false });
+    }
+  };
+
+  // OTP handling functions
+  const handleOtpChange = (index, value) => {
+    // Allow both letters and numbers
+    if (value.length <= 1 && /^[a-zA-Z0-9]*$/.test(value)) {
+      const newOtpValues = [...otpValues];
+      newOtpValues[index] = value.toUpperCase(); // Convert to uppercase for consistency
+      setOtpValues(newOtpValues);
+
+      // Auto focus next input
+      if (value && index < 5) {
+        const nextInput = document.getElementById(`otp-${index + 1}`);
+        if (nextInput) nextInput.focus();
+      }
+    }
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !otpValues[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-${index - 1}`);
+      if (prevInput) prevInput.focus();
+    }
+  };
+
+  const handleOtpSubmit = async () => {
+    const otpCode = otpValues.join("");
+    if (otpCode.length !== 6) {
+      showToast.error("Vui lòng nhập đầy đủ 6 ký tự OTP!");
+      return;
+    }
+
+    setConfigLoadding({ ...configLoadding, otpLoading: true });
+
+    try {
+      const response = await verifyOtpRegister(dataRegister.email, otpCode);
+
+      if (response?.status === 200) {
+        setIsModalVisible(false);
+        showToast.success("Đăng ký tài khoản thành công!");
+
+        // Reset form
+        setDataRegister({ email: "", username: "", password: "" });
+        setOtpValues(["", "", "", "", "", ""]);
+        setIsCountdownActive(false);
+
+        // Redirect to login page after successful registration
+        setTimeout(() => {
+          navigate(URL.AUTH.LOGIN);
+        }, 1500);
+      } else {
+        showToast.error(response?.message || "Mã OTP không đúng. Vui lòng thử lại!");
+      }
+    } catch (error) {
+      showToast.error("Có lỗi xảy ra khi xác thực OTP!");
+    } finally {
+      setConfigLoadding({ ...configLoadding, otpLoading: false });
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setConfigLoadding({ ...configLoadding, registerLoadding: true });
+
+    try {
+      const response = await register(dataRegister);
+
+      if (response?.status === 200) {
+        setCountdown(90);
+        setIsCountdownActive(true);
+        setOtpValues(["", "", "", "", "", ""]);
+        showToast.success("Mã OTP mới đã được gửi!");
+      } else {
+        showToast.error("Không thể gửi lại mã OTP. Vui lòng thử lại!");
+      }
+    } catch (error) {
+      showToast.error("Có lỗi xảy ra khi gửi lại mã OTP!");
+    } finally {
+      setConfigLoadding({ ...configLoadding, registerLoadding: false });
+    }
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const handleLoginWithGoogle = () => {
+    setConfigLoadding({ ...configLoadding, loginLoaddingGoogle: true });
+    const provider = new GoogleAuthProvider();
+    signInWithPopup(auth, provider)
+      .then(async (result) => {
+        const id_token = await result.user.getIdToken();
+        const provider = result.providerId;
+        const email = result.user.email;
+        const username = result.user.displayName;
+        const avatar = result.user.photoURL;
+        const data = {
+          id_token,
+          provider,
+          email,
+          username,
+          avatar,
+        };
+
+        const response = await oauthLogin(data);
+
+        if (response?.status === 200) {
+          const { accessToken, refreshToken, userId } = response;
+
+          Cookies.set("accessToken", accessToken, { expires: 1 / 24 }); // 1 giờ
+          Cookies.set("refreshToken", refreshToken, { expires: 14 }); // 14 ngày
+          const user = await getCurrentUser(userId);
+          if (user?.status === 200) {
+            dispatch(setUser(user?.data, true));
+          }
+          setTimeout(() => {
+            setConfigLoadding({ ...configLoadding, loginLoaddingGoogle: false });
+            showToast.success("Đăng nhập thành công");
+            navigate("/");
+          }, 1000);
+        } else {
+          setConfigLoadding({ ...configLoadding, loginLoaddingGoogle: false });
+          showToast.error(
+            "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin"
+          );
+        }
+      })
+      .catch((error) => {
+        setConfigLoadding({ ...configLoadding, loginLoaddingGoogle: false });
+
+        if (error.code === "auth/account-exists-with-different-credential") {
+          showToast.error(
+            "Tài khoản đã tồn tại với nhà cung cấp khác. Vui lòng thử lại với tài khoản khác."
+          );
+        } else {
+          showToast.error(
+            "Đã xảy ra lỗi bất ngờ khi đăng nhập. Vui lòng thử lại sau"
+          );
+        }
+      });
   };
 
   return (
@@ -93,6 +299,9 @@ export default function Register() {
                   },
                 ]}>
                 <Input
+                  name={"email"}
+                  value={dataRegister.email}
+                  onChange={handleOnChangeRegister}
                   prefix={<MailOutlined className="text-gray-400" />}
                   placeholder="Địa chỉ email"
                   className="rounded-lg border-gray-200 hover:border-green-400 focus:border-green-500 py-3"
@@ -114,6 +323,9 @@ export default function Register() {
                 <Input
                   prefix={<UserOutlined className="text-gray-400" />}
                   placeholder="Tên đăng nhập"
+                  name={"username"}
+                  value={dataRegister.username}
+                  onChange={handleOnChangeRegister}
                   className="rounded-lg border-gray-200 hover:border-green-400 focus:border-green-500 py-3"
                 />
               </Form.Item>
@@ -133,6 +345,9 @@ export default function Register() {
                 <Input.Password
                   prefix={<LockOutlined className="text-gray-400" />}
                   placeholder="Mật khẩu"
+                  name={"password"}
+                  value={dataRegister.password}
+                  onChange={handleOnChangeRegister}
                   className="rounded-lg border-gray-200 hover:border-green-400 focus:border-green-500 py-3"
                   iconRender={(visible) =>
                     visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
@@ -179,8 +394,8 @@ export default function Register() {
                         value
                           ? Promise.resolve()
                           : Promise.reject(
-                              new Error("Vui lòng đồng ý với điều khoản!")
-                            ),
+                            new Error("Vui lòng đồng ý với điều khoản!")
+                          ),
                     },
                   ]}
                   className="!mb-0">
@@ -203,6 +418,7 @@ export default function Register() {
 
               <Form.Item className="!mb-6">
                 <Button
+                  loading={configLoadding.registerLoadding}
                   type="primary"
                   htmlType="submit"
                   className="w-full h-12 bg-gradient-to-r from-green-500 to-blue-600 border-0 rounded-lg font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
@@ -210,26 +426,6 @@ export default function Register() {
                 </Button>
               </Form.Item>
             </Form>
-
-            <Divider className="!my-8">
-              <Text className="text-gray-400 font-medium px-4">
-                Hoặc đăng ký với
-              </Text>
-            </Divider>
-
-            <div className="space-y-3">
-              <Button
-                className="w-full h-12 flex items-center justify-center gap-3 bg-white border-2 border-gray-200 text-gray-700 rounded-lg font-medium hover:border-red-400 hover:text-red-500 hover:shadow-md transition-all duration-300"
-                icon={<FcGoogle size={24} />}>
-                Đăng ký với Google
-              </Button>
-
-              <Button
-                className="w-full h-12 flex items-center justify-center gap-3 bg-gray-900 border-2 border-gray-900 text-white rounded-lg font-medium hover:bg-black hover:border-black hover:shadow-md transition-all duration-300"
-                icon={<FaGithub size={24} />}>
-                Đăng ký với Github
-              </Button>
-            </div>
 
             <div className="text-center mt-8 pt-6 border-t border-gray-100">
               <Text className="text-gray-500">
@@ -251,6 +447,74 @@ export default function Register() {
           </div>
         </div>
       </div>
+
+      {/* OTP Verification Modal */}
+      <Modal
+        title={null}
+        open={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        footer={null}
+        centered
+        width={400}
+        className="otp-modal">
+        <div className="text-center p-6">
+          <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-full mx-auto mb-4 flex items-center justify-center">
+            <CheckCircleOutlined className="text-white text-2xl" />
+          </div>
+
+          <Title level={3} className="!mb-2">
+            Xác thực tài khoản
+          </Title>
+
+          <Text className="text-gray-500 block mb-6">
+            Mã xác thực đã được gửi đến
+            <br />
+            <strong>{dataRegister.email}</strong>
+          </Text>
+
+          <div className="flex justify-center gap-3 mb-6">
+            {otpValues.map((value, index) => (
+              <Input
+                key={index}
+                id={`otp-${index}`}
+                value={value}
+                onChange={(e) => handleOtpChange(index, e.target.value)}
+                onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                className="w-12 h-12 text-center text-xl font-bold rounded-lg border-2 border-gray-200 focus:border-green-500 uppercase"
+                maxLength={1}
+                placeholder="•"
+              />
+            ))}
+          </div>
+
+          <div className="mb-6">
+            {isCountdownActive ? (
+              <Text className="text-gray-500">
+                Gửi lại mã sau:{" "}
+                <span className="font-bold text-green-600">
+                  {formatTime(countdown)}
+                </span>
+              </Text>
+            ) : (
+              <Button
+                type="link"
+                onClick={handleResendOtp}
+                loading={configLoadding.registerLoadding}
+                className="text-green-500 hover:text-green-700 font-medium p-0">
+                Gửi lại mã OTP
+              </Button>
+            )}
+          </div>
+
+          <Button
+            type="primary"
+            onClick={handleOtpSubmit}
+            loading={configLoadding.otpLoading}
+            className="w-full h-12 bg-gradient-to-r from-green-500 to-blue-600 border-0 rounded-lg font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300">
+            Xác thực tài khoản
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

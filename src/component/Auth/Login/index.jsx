@@ -1,5 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button, Card, Form, Input, Typography, Divider, Checkbox } from "antd";
+import {
+  GithubAuthProvider,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
+import { auth } from "../../../helper/filebase";
 import {
   UserOutlined,
   LockOutlined,
@@ -9,13 +15,117 @@ import {
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 import URL from "../../../utils/url";
-import { Link } from "react-router-dom";
+import Cookies from "js-cookie";
+import { Link, useNavigate } from "react-router-dom";
+import { login, oauthLogin } from "../../../services/auth";
+import { showToast } from "../../../utils/toast";
+import { useDispatch } from "react-redux";
+import { setUser } from "../../../redux/action/userAction";
+import { getCurrentUser } from "../../../services/user";
+
 const { Title, Text } = Typography;
 
+
+
 export default function Login() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [dataLogin, setDataLogin] = useState({
+    username: "",
+    password: "",
+  });
+
+  const [configLoadding, setConfigLoadding] = useState({
+    loginLoaddingUserNamePassword: false,
+    loginLoaddingGoogle: false,
+    loginLoaddingGithub: false,
+  });
+
   const onFinish = (values) => {
     console.log("Received values of form: ", values);
   };
+
+  const handleLoginWithGoogle = () => {
+    setConfigLoadding({ ...configLoadding, loginLoaddingGoogle: true });
+    const provider = new GoogleAuthProvider();
+    signInWithPopup(auth, provider)
+      .then(async (result) => {
+        const id_token = await result.user.getIdToken();
+        const provider = result.providerId;
+        const email = result.user.email;
+        const username = result.user.displayName;
+        const avatar = result.user.photoURL;
+        const data = {
+          id_token,
+          provider,
+          email,
+          username,
+          avatar,
+        };
+
+        const response = await oauthLogin(data);
+
+        if (response?.status === 200) {
+          const { accessToken, refreshToken, userId } = response;
+
+          Cookies.set("accessToken", accessToken, { expires: 1 / 24 }); // 1 giờ
+          Cookies.set("refreshToken", refreshToken, { expires: 14 }); // 14 ngày
+          const user = await getCurrentUser(userId);
+          if (user?.status === 200) {
+            dispatch(setUser(user?.data, true));
+          }
+          setTimeout(() => {
+            setConfigLoadding({ ...configLoadding, loginLoaddingGoogle: false });
+            showToast.success("Đăng nhập thành công");
+            navigate("/");
+          }, 1000);
+        } else {
+          setConfigLoadding({ ...configLoadding, loginLoaddingGoogle: false });
+          showToast.error(
+            "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin"
+          );
+        }
+      })
+      .catch((error) => {
+        setConfigLoadding({ ...configLoadding, loginLoaddingGoogle: false });
+
+        if (error.code === "auth/account-exists-with-different-credential") {
+          showToast.error(
+            "Tài khoản đã tồn tại với nhà cung cấp khác. Vui lòng thử lại với tài khoản khác."
+          );
+        } else {
+          showToast.error(
+            "Đã xảy ra lỗi bất ngờ khi đăng nhập. Vui lòng thử lại sau"
+          );
+        }
+      });
+  };
+
+
+  const handleOnChangeLogin = (e) => {
+    setDataLogin({ ...dataLogin, [e.target.name]: e.target.value });
+  };
+
+
+  const handleLogin = async () => {
+    setConfigLoadding({ ...configLoadding, loginLoaddingUserNamePassword: true });
+    const response = await login(dataLogin);
+
+    if (response?.status === 200) {
+      Cookies.set("accessToken", response.accessToken);
+      Cookies.set("refreshToken", response.refreshToken);
+      setTimeout(() => {
+        setConfigLoadding({ ...configLoadding, loginLoaddingUserNamePassword: false });
+        showToast.success("Đăng nhập thành công");
+        navigate("/");
+      }, 1500);
+    } else {
+      showToast.error("Đăng nhập thất bại. Vui lòng kiểm tra lại tên đăng nhập và mật khẩu.");
+    }
+    setConfigLoadding({ ...configLoadding, loginLoaddingUserNamePassword: false });
+  }
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex">
@@ -90,6 +200,9 @@ export default function Login() {
                 <Input
                   prefix={<UserOutlined className="text-gray-400" />}
                   placeholder="Tên đăng nhập hoặc email"
+                  name="username"
+                  value={dataLogin.username}
+                  onChange={handleOnChangeLogin}
                   className="rounded-lg border-gray-200 hover:border-blue-400 focus:border-blue-500 py-3"
                 />
               </Form.Item>
@@ -105,6 +218,9 @@ export default function Login() {
                 <Input.Password
                   prefix={<LockOutlined className="text-gray-400" />}
                   placeholder="Mật khẩu"
+                  name="password"
+                  value={dataLogin.password}
+                  onChange={handleOnChangeLogin}
                   className="rounded-lg border-gray-200 hover:border-blue-400 focus:border-blue-500 py-3"
                   iconRender={(visible) =>
                     visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
@@ -130,6 +246,8 @@ export default function Login() {
 
               <Form.Item className="!mb-6">
                 <Button
+                  loading={configLoadding.loginLoaddingUserNamePassword}
+                  onClick={handleLogin}
                   type="primary"
                   htmlType="submit"
                   className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 border-0 rounded-lg font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
@@ -146,16 +264,13 @@ export default function Login() {
 
             <div className="space-y-3">
               <Button
+                loading={configLoadding.loginLoaddingGoogle}
+                onClick={handleLoginWithGoogle}
                 className="w-full h-12 flex items-center justify-center gap-3 bg-white border-2 border-gray-200 text-gray-700 rounded-lg font-medium hover:border-red-400 hover:text-red-500 hover:shadow-md transition-all duration-300"
                 icon={<FcGoogle size={24} />}>
                 Đăng nhập với Google
               </Button>
 
-              <Button
-                className="w-full h-12 flex items-center justify-center gap-3 bg-gray-900 border-2 border-gray-900 text-white rounded-lg font-medium hover:bg-black hover:border-black hover:shadow-md transition-all duration-300"
-                icon={<FaGithub size={24} />}>
-                Đăng nhập với Github
-              </Button>
             </div>
 
             <div className="text-center mt-8 pt-6 border-t border-gray-100">
