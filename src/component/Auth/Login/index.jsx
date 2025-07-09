@@ -125,8 +125,6 @@ export default function Login() {
     setConfigLoadding({ ...configLoadding, loginLoaddingUserNamePassword: false });
   }
 
-
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex">
       <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 relative overflow-hidden">
