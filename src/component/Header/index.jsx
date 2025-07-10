@@ -1,6 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { selectIsLogin, selectUser } from "../../redux/slice/useSlice";
+import { logout } from "../../redux/action/userAction";
+import { useDispatch } from "react-redux";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  FaNewspaper,
+  FaSearch,
+  FaBars,
+  FaTimes,
+  FaUser,
+  FaChevronDown,
+  FaGlobeAmericas,
+  FaBolt
+} from 'react-icons/fa';
 
 export default function Header() {
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -13,9 +26,11 @@ export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [isSearchLoading, setIsSearchLoading] = useState(false);
-
   const isLogin = useSelector(selectIsLogin);
   const user = useSelector(selectUser);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const userMenuRef = useRef(null);
   const searchRef = useRef(null);
 
@@ -167,6 +182,12 @@ export default function Header() {
       window.location.href = `/tim-kiem?q=${encodeURIComponent(searchTerm)}`;
     }
   };
+  const handleLogout = () => {
+    setIsUserMenuOpen(false);
+    dispatch(logout());
+    navigate("/dang-nhap");
+  };
+
 
   const handleImageError = (e) => {
     e.target.src = "data:image/svg+xml,%3Csvg width='100' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='12' fill='%23374151' text-anchor='middle' dy='.3em'%3ENo Image%3C/text%3E%3C/svg%3E";
@@ -273,7 +294,8 @@ export default function Header() {
     },
     {
       title: "Đăng xuất",
-      path: "/dang-xuat",
+      onClick: handleLogout,
+      path: "/dang-nhap",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -299,10 +321,6 @@ export default function Header() {
     setIsUserMenuOpen(!isUserMenuOpen);
   };
 
-  const handleLogout = () => {
-    // Add logout logic here
-    setIsUserMenuOpen(false);
-  };
 
   const getInitials = (name) => {
     if (!name) return "U";
@@ -314,21 +332,45 @@ export default function Header() {
       <div className="max-w-7xl mx-auto flex items-center justify-between px-5 h-[70px]">
         {/* Logo */}
         <div className="flex items-center">
-          <a href="/" className="flex items-center no-underline">
-            <img
-              src="/logo-news.svg"
-              alt="News Logo"
-              className="h-12 w-auto mr-3"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextSibling.style.display = 'block';
-              }}
-            />
-            <div className="flex flex-col text-white hidden">
-              <span className="text-2xl font-bold leading-none">NEWS</span>
-              <span className="text-xs font-normal opacity-90">TIN TỨC 24H</span>
+          <Link to="/" className="flex items-center no-underline group">
+            <div className="relative flex items-center">
+              {/* Logo Icon Container */}
+              <div className="relative">
+                <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                  <FaNewspaper className="w-6 h-6 text-white" />
+                </div>
+                {/* Pulse Effect */}
+                <div className="absolute inset-0 w-12 h-12 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 rounded-xl animate-pulse opacity-75 group-hover:opacity-100 transition-opacity duration-300"></div>
+                {/* Lightning Effect */}
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-300 rounded-full flex items-center justify-center shadow-md group-hover:animate-bounce">
+                  <FaBolt className="w-2 h-2 text-orange-600" />
+                </div>
+              </div>
+
+              {/* Logo Text */}
+              <div className="ml-3 flex flex-col">
+                <div className="flex items-center">
+                  <span className="text-2xl font-bold text-white leading-none tracking-tight">
+                    NEWS
+                  </span>
+                  <span className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent leading-none tracking-tight">
+                    24H
+                  </span>
+                </div>
+                <div className="flex items-center mt-0.5">
+                  <FaGlobeAmericas className="w-3 h-3 text-blue-300 mr-1" />
+                  <span className="text-xs text-blue-200 font-medium uppercase tracking-wider">
+                    TIN TỨC NHANH
+                  </span>
+                </div>
+              </div>
             </div>
-          </a>
+
+            {/* Hover Glow Effect */}
+            <div className="absolute inset-0 -z-10 opacity-0 group-hover:opacity-20 transition-opacity duration-300">
+              <div className="w-full h-full bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg blur-lg"></div>
+            </div>
+          </Link>
         </div>
 
         {/* Desktop Navigation */}
@@ -392,15 +434,7 @@ export default function Header() {
                 type="submit"
                 className="bg-transparent border-none text-white px-4 py-2 cursor-pointer flex items-center transition-all duration-300 hover:text-yellow-400 focus:outline-2 focus:outline-yellow-400 focus:outline-offset-2"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M21 21L16.514 16.506M19 10.5C19 15.194 15.194 19 10.5 19S2 15.194 2 10.5 5.806 2 10.5 2 19 5.806 19 10.5Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                <FaSearch className="w-5 h-5" />
               </button>
             </form>
 
@@ -470,7 +504,6 @@ export default function Header() {
                       )}
                     </>
                   )}
-
                   {/* No Results */}
                   {!isSearchLoading && searchTerm && searchResults.length === 0 && (
                     <div className="text-center py-4">
@@ -497,55 +530,85 @@ export default function Header() {
                 <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center text-blue-900 font-semibold text-sm">
                   {getInitials(user?.name || user?.email)}
                 </div>
-                <span className="text-white text-sm hidden lg:block">
-                  {user?.name || user?.email || "User"}
-                </span>
-                <svg
-                  className={`w-4 h-4 text-white transition-transform duration-300 ${isUserMenuOpen ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <span
+                  className="text-white text-sm hidden lg:block max-w-[120px] truncate"
+                  style={{ display: 'inline-block', verticalAlign: 'middle' }}
+                  title={user?.username || user?.email || "User"}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                  {user?.username || user?.email || "User"}
+                </span>
+                <FaChevronDown
+                  className={`w-4 h-4 text-white transition-transform duration-300 ${isUserMenuOpen ? 'rotate-180' : ''}`}
+                />
               </button>
 
               {/* User Dropdown */}
-              <div className={`absolute top-full right-0 mt-2 w-56 bg-white rounded-lg shadow-2xl py-2 transition-all duration-300 ${isUserMenuOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-3'
-                }`}>
+              <div
+                className={`absolute top-full right-0 mt-2 w-56 bg-white rounded-lg shadow-2xl py-2 transition-all duration-300 ${isUserMenuOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-3'
+                  }`}
+                style={{ overflowX: 'hidden', wordBreak: 'break-word' }}
+              >
                 <div className="px-4 py-3 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">{user?.name || "User"}</p>
-                  <p className="text-sm text-gray-500">{user?.email}</p>
-                </div>
-                {userMenuItems.map((item, index) => (
-                  <a
-                    key={index}
-                    href={item.path}
-                    onClick={item.isLogout ? handleLogout : undefined}
-                    className={`flex items-center gap-3 px-4 py-3 text-sm transition-all duration-300 hover:bg-gray-100 ${item.isLogout ? 'text-red-600 hover:bg-red-50' : 'text-gray-700 hover:text-blue-700'
-                      }`}
+                  <p
+                    className="text-sm font-medium text-gray-900 max-w-[180px] truncate"
+                    style={{ wordBreak: 'break-all' }}
+                    title={user?.username || "User"}
                   >
-                    {item.icon}
-                    {item.title}
-                  </a>
-                ))}
+                    {user?.username || "User"}
+                  </p>
+                  <p
+                    className="text-sm text-gray-500 max-w-[180px] truncate"
+                    title={user?.email}
+                    style={{ wordBreak: 'break-all' }}
+                  >
+                    {user?.email}
+                  </p>
+                </div>
+                <Link
+                  to="/quan-ly-tai-khoan"
+                  className="flex items-center gap-3 px-4 py-3 text-sm transition-all duration-300 hover:bg-gray-100 text-gray-700 hover:text-blue-700"
+                >
+                  <FaUser className="w-4 h-4" />
+                  Tài khoản của tôi
+                </Link>
+                <Link
+                  to="/bai-viet-da-luu"
+                  className="flex items-center gap-3 px-4 py-3 text-sm transition-all duration-300 hover:bg-gray-100 text-gray-700 hover:text-blue-700"
+                >
+                  <FaNewspaper className="w-4 h-4" />
+                  Bài viết đã lưu
+                </Link>
+                <Link
+                  to="/bai-viet-da-thich"
+                  className="flex items-center gap-3 px-4 py-3 text-sm transition-all duration-300 hover:bg-gray-100 text-gray-700 hover:text-blue-700"
+                >
+                  <FaBolt className="w-4 h-4" />
+                  Bài viết đã thích
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm transition-all duration-300 hover:bg-red-50 text-red-600 hover:text-red-700"
+                >
+                  <FaTimes className="w-4 h-4" />
+                  Đăng xuất
+                </button>
               </div>
             </div>
           ) : (
             /* Login/Register Buttons - When not logged in */
             <div className="hidden md:flex items-center gap-2">
-              <a
-                href="/login"
+              <Link
+                to="/dang-nhap"
                 className="text-white hover:text-yellow-400 px-3 py-2 text-sm font-medium transition-all duration-300 focus:outline-2 focus:outline-yellow-400 focus:outline-offset-2"
               >
                 Đăng nhập
-              </a>
-              <a
-                href="/register"
+              </Link>
+              <Link
+                to="/dang-ky"
                 className="bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 focus:outline-2 focus:outline-yellow-400 focus:outline-offset-2"
               >
                 Đăng ký
-              </a>
+              </Link>
             </div>
           )}
 
@@ -554,9 +617,11 @@ export default function Header() {
             className="md:hidden flex flex-col bg-transparent border-none cursor-pointer p-1 gap-1 focus:outline-2 focus:outline-yellow-400 focus:outline-offset-2"
             onClick={toggleMobileMenu}
           >
-            <span className={`w-6 h-0.5 bg-white transition-all duration-300 rounded ${isMobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></span>
-            <span className={`w-6 h-0.5 bg-white transition-all duration-300 rounded ${isMobileMenuOpen ? 'opacity-0' : ''}`}></span>
-            <span className={`w-6 h-0.5 bg-white transition-all duration-300 rounded ${isMobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></span>
+            {isMobileMenuOpen ? (
+              <FaTimes className="w-6 h-6 text-white" />
+            ) : (
+              <FaBars className="w-6 h-6 text-white" />
+            )}
           </button>
         </div>
       </div>
@@ -699,18 +764,18 @@ export default function Header() {
           ) : (
             <div className="mb-4 pb-4 border-b border-white/20">
               <div className="flex flex-col gap-2">
-                <a
-                  href="/login"
+                <Link
+                  to="/dang-nhap"
                   className="text-white hover:text-yellow-400 py-2 text-sm font-medium transition-all duration-300"
                 >
                   Đăng nhập
-                </a>
-                <a
-                  href="/register"
-                  className="bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 text-center"
+                </Link>
+                <Link
+                  to="/dang-ky"
+                  className="bg-yellow-400 text-center hover:bg-yellow-500 text-blue-900 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 text-center"
                 >
                   Đăng ký
-                </a>
+                </Link>
               </div>
             </div>
           )}

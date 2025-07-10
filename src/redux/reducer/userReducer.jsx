@@ -18,6 +18,7 @@ const userReducer = (state = INIT_STATE, action) => {
     case "LOGOUT":
       Cookies.remove("accessToken");
       Cookies.remove("refreshToken");
+      localStorage.removeItem("user");
       return INIT_STATE;
     default:
       return state;

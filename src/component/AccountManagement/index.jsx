@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { selectIsLogin, selectUser } from '../../redux/slice/useSlice';
 import { showToast } from '../../utils/toast';
-
+import { updatePassword, updateInfo } from '../../services/user';
+import { getCurrentUser } from '../../services/user';
+import { useDispatch } from 'react-redux';
+import { logout, setUser } from '../../redux/action/userAction';
+import { useNavigate } from 'react-router-dom';
 const AccountManagement = () => {
     const [activeTab, setActiveTab] = useState('profile');
     const [loading, setLoading] = useState(false);
     const isLogin = useSelector(selectIsLogin);
     const user = useSelector(selectUser);
-    const dispatch = useDispatch();
-
+    const nav = useNavigate()
+    const dispatch = useDispatch()
     // Profile form state
     const [profileForm, setProfileForm] = useState({
         fullName: '',
         email: '',
-        phone: '',
-        avatar: null
+        avatar: null,
+        avatarFile: null
     });
 
     // Password form state
@@ -30,15 +34,15 @@ const AccountManagement = () => {
     const [passwordErrors, setPasswordErrors] = useState({});
 
     // Check if user logged in with Google
-    const isGoogleLogin = user?.loginMethod === 'google' || user?.provider === 'google';
+    const isGoogleLogin = user?.authProviderResponseDTO?.filter(item => item.providerName === 'google.com' && item.active === 'HOAT_DONG').length > 0;
 
     useEffect(() => {
         if (user) {
             setProfileForm({
-                fullName: user.fullName || user.name || '',
-                email: user.email || '',
-                phone: user.phone || '',
-                avatar: user.avatar || null
+                fullName: user?.username || user?.name || '',
+                email: user?.email || '',
+                avatar: user?.avatar || null,
+                avatarFile: user?.avatarFile || null
             });
         }
     }, [user]);
@@ -90,10 +94,6 @@ const AccountManagement = () => {
             errors.email = 'Email không hợp lệ';
         }
 
-        if (profileForm.phone && !/^[0-9]{10,11}$/.test(profileForm.phone.replace(/\s/g, ''))) {
-            errors.phone = 'Số điện thoại không hợp lệ';
-        }
-
         setProfileErrors(errors);
         return Object.keys(errors).length === 0;
     };
@@ -132,16 +132,35 @@ const AccountManagement = () => {
 
         setLoading(true);
         try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            let response = null
+            // Gửi file thực sự lên server (không phải base64)
+            if (profileForm?.fullName !== user?.username) {
+                response = await updateInfo(profileForm?.avatarFile, profileForm?.fullName);
+            } else {
+                response = await updateInfo(profileForm?.avatarFile, null);
+            }
 
-            // Here you would call your API to update profile
-            // await updateProfile(profileForm);
+            if (response?.status === 200) {
+                if (profileForm?.fullName !== user?.username) {
+                    showToast.success('Cập nhật thành công, vui lòng đăng nhập lại')
+                    nav('/dang-nhap')
+                    dispatch(logout())
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    const currentUser = await getCurrentUser();
+                    if (currentUser?.status === 200) {
+                        dispatch(setUser(currentUser?.data, true));
+                        showToast.success('Cập nhật thành công!');
+                    } else {
+                        showToast.error('Có lỗi xảy ra khi cập nhật thông tin!');
+                    }
+                }
 
-            showToast.success('Cập nhật thông tin thành công!');
-
-            // Update user in Redux store
-            // dispatch(updateUser(profileForm));
+            } else {
+                showToast.error('Có lỗi xảy ra khi cập nhật thông tin!');
+            }
 
         } catch (error) {
             console.error('Profile update error:', error);
@@ -166,8 +185,12 @@ const AccountManagement = () => {
             //   currentPassword: passwordForm.currentPassword,
             //   newPassword: passwordForm.newPassword
             // });
-
-            showToast.success('Đổi mật khẩu thành công!');
+            const response = await updatePassword(passwordForm.currentPassword, passwordForm.newPassword);
+            if (response?.status === 200) {
+                showToast.success('Đổi mật khẩu thành công!');
+            } else {
+                showToast.error('Có lỗi xảy ra khi đổi mật khẩu!');
+            }
 
             // Clear form
             setPasswordForm({
@@ -186,17 +209,20 @@ const AccountManagement = () => {
 
     const handleAvatarChange = (e) => {
         const file = e.target.files[0];
+
         if (file) {
             if (file.size > 5 * 1024 * 1024) { // 5MB
                 showToast.error('Kích thước ảnh không được vượt quá 5MB!');
                 return;
             }
 
+            // Chỉ đọc file để hiển thị preview, không gửi base64 lên server
             const reader = new FileReader();
             reader.onload = (e) => {
                 setProfileForm(prev => ({
                     ...prev,
-                    avatar: e.target.result
+                    avatar: e.target.result, // Chỉ dùng để hiển thị preview
+                    avatarFile: file // File thực sự sẽ được gửi lên server
                 }));
             };
             reader.readAsDataURL(file);
@@ -376,9 +402,10 @@ const AccountManagement = () => {
                                             name="email"
                                             value={profileForm.email}
                                             onChange={handleProfileChange}
-                                            disabled={isGoogleLogin}
+                                            disabled={true}
                                             className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${profileErrors.email ? 'border-red-500' : 'border-gray-300'
-                                                } ${isGoogleLogin ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                                } ${true ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                            readOnly={true}
                                             placeholder="Nhập email của bạn"
                                         />
                                         {profileErrors.email && (
@@ -386,26 +413,6 @@ const AccountManagement = () => {
                                         )}
                                         {isGoogleLogin && (
                                             <p className="text-gray-500 text-sm mt-1">Email được quản lý bởi Google</p>
-                                        )}
-                                    </div>
-
-                                    {/* Phone */}
-                                    <div>
-                                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                                            Số điện thoại
-                                        </label>
-                                        <input
-                                            type="tel"
-                                            id="phone"
-                                            name="phone"
-                                            value={profileForm.phone}
-                                            onChange={handleProfileChange}
-                                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${profileErrors.phone ? 'border-red-500' : 'border-gray-300'
-                                                }`}
-                                            placeholder="Nhập số điện thoại"
-                                        />
-                                        {profileErrors.phone && (
-                                            <p className="text-red-500 text-sm mt-1">{profileErrors.phone}</p>
                                         )}
                                     </div>
 

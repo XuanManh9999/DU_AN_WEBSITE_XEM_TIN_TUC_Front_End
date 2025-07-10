@@ -15,7 +15,7 @@ let isAlertShown = false;
 
 axiosInstance.interceptors.request.use(
   async (config) => {
-    const token = Cookies.get("token");
+    const token = Cookies.get("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -42,7 +42,7 @@ axiosInstance.interceptors.response.use(
         return Promise.reject(err);
       }
 
-      Cookies.remove("token");
+      Cookies.remove("accessToken");
 
       try {
         const res = await axios.get(
@@ -59,7 +59,7 @@ axiosInstance.interceptors.response.use(
           throw new Error("Không nhận được access token mới");
         }
 
-        Cookies.set("token", newAccessToken, {
+        Cookies.set("accessToken", newAccessToken, {
           sameSite: "None",
           secure: true,
         });

@@ -70,15 +70,20 @@ export default function Login() {
 
           Cookies.set("accessToken", accessToken, { expires: 1 / 24 }); // 1 giờ
           Cookies.set("refreshToken", refreshToken, { expires: 14 }); // 14 ngày
-          const user = await getCurrentUser(userId);
+          const user = await getCurrentUser();
+
           if (user?.status === 200) {
             dispatch(setUser(user?.data, true));
-          }
-          setTimeout(() => {
+            setTimeout(() => {
+              setConfigLoadding({ ...configLoadding, loginLoaddingGoogle: false });
+              showToast.success("Đăng nhập thành công");
+              navigate("/");
+            }, 1000);
+          } else {
+            showToast.error("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin");
             setConfigLoadding({ ...configLoadding, loginLoaddingGoogle: false });
-            showToast.success("Đăng nhập thành công");
-            navigate("/");
-          }, 1000);
+          }
+
         } else {
           setConfigLoadding({ ...configLoadding, loginLoaddingGoogle: false });
           showToast.error(
@@ -99,6 +104,7 @@ export default function Login() {
           );
         }
       });
+    setConfigLoadding({ ...configLoadding, loginLoaddingGoogle: false });
   };
 
 
@@ -114,11 +120,20 @@ export default function Login() {
     if (response?.status === 200) {
       Cookies.set("accessToken", response.accessToken);
       Cookies.set("refreshToken", response.refreshToken);
-      setTimeout(() => {
+
+      const user = await getCurrentUser(response.userId);
+      if (user?.status === 200) {
+        dispatch(setUser(user?.data, true));
+        setTimeout(() => {
+          setConfigLoadding({ ...configLoadding, loginLoaddingUserNamePassword: false });
+          showToast.success("Đăng nhập thành công");
+          navigate("/");
+        }, 1500);
+
+      } else {
+        showToast.error("Đăng nhập thất bại. Vui lòng kiểm tra lại tên đăng nhập và mật khẩu.");
         setConfigLoadding({ ...configLoadding, loginLoaddingUserNamePassword: false });
-        showToast.success("Đăng nhập thành công");
-        navigate("/");
-      }, 1500);
+      }
     } else {
       showToast.error("Đăng nhập thất bại. Vui lòng kiểm tra lại tên đăng nhập và mật khẩu.");
     }

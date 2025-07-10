@@ -395,13 +395,6 @@ export default function Home() {
             <div className="bg-gradient-to-r from-blue-700 via-blue-800 to-blue-900 rounded-lg shadow-xl overflow-hidden mb-6 border-4 border-yellow-400 relative">
               <div className="relative">
                 <img
-                  src="/logo-news.svg"
-                  alt="Logo Tin Tức 24/7"
-                  className="absolute top-6 left-6 w-20 h-20 z-20 bg-white rounded-full p-2 shadow-lg border-2 border-yellow-400"
-                  style={{ background: "rgba(255,255,255,0.95)" }}
-                  onError={handleImageError}
-                />
-                <img
                   src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"
                   alt="Hero Tin Tức 24/7"
                   className="w-full h-80 object-cover"
