@@ -2,6 +2,23 @@ import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { selectIsLogin, selectUser } from "../../redux/slice/useSlice";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import {
+    FaEye,
+    FaHeart,
+    FaRegHeart,
+    FaComment,
+    FaBookmark,
+    FaRegBookmark,
+    FaShare,
+    FaChevronRight,
+    FaThumbsUp,
+    FaReply,
+    FaSpinner,
+    FaPaperPlane,
+    FaUser
+} from 'react-icons/fa';
 
 export default function DetailArticle() {
     const { slug } = useParams();
@@ -12,9 +29,26 @@ export default function DetailArticle() {
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState("");
     const [isLoading, setIsLoading] = useState(true);
+    const [replyingTo, setReplyingTo] = useState(null);
+    const [replyContent, setReplyContent] = useState("");
+    const [commentLikes, setCommentLikes] = useState({});
 
     const isLogin = useSelector(selectIsLogin);
     const user = useSelector(selectUser);
+
+    // Cấu hình ReactQuill
+    const quillModules = {
+        toolbar: [
+            ['bold', 'italic', 'underline'],
+            ['link'],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            ['clean']
+        ],
+    };
+
+    const quillFormats = [
+        'bold', 'italic', 'underline', 'link', 'list', 'bullet'
+    ];
 
     // Mock data - trong thực tế sẽ fetch từ API
     const mockArticle = {
@@ -74,9 +108,24 @@ export default function DetailArticle() {
                 name: "Trần Thị Hoa",
                 avatar: "https://picsum.photos/50/50?random=user1"
             },
-            content: "Bài viết rất hay và bổ ích. Cảm ơn tác giả đã chia sẻ!",
+            content: "Bài viết rất hay và bổ ích. Cảm ơn tác giả đã chia sẻ thông tin quý báu này!",
+            htmlContent: "<p>Bài viết rất hay và bổ ích. Cảm ơn tác giả đã chia sẻ thông tin quý báu này!</p>",
             createdAt: "2024-07-04T14:30:00Z",
-            likes: 5
+            likes: 5,
+            replies: [
+                {
+                    id: 11,
+                    user: {
+                        name: "Nguyễn Văn An",
+                        avatar: "https://picsum.photos/50/50?random=author1"
+                    },
+                    content: "Cảm ơn bạn đã đọc và ủng hộ. Mình sẽ tiếp tục chia sẻ những thông tin hữu ích khác!",
+                    htmlContent: "<p>Cảm ơn bạn đã đọc và ủng hộ. Mình sẽ tiếp tục chia sẻ những thông tin hữu ích khác!</p>",
+                    createdAt: "2024-07-04T14:45:00Z",
+                    likes: 2,
+                    parentId: 1
+                }
+            ]
         },
         {
             id: 2,
@@ -84,9 +133,11 @@ export default function DetailArticle() {
                 name: "Lê Minh Hoàng",
                 avatar: "https://picsum.photos/50/50?random=user2"
             },
-            content: "Thông tin rất cập nhật và thiết thực. Hy vọng sẽ có thêm nhiều bài viết như thế này.",
+            content: "Thông tin rất cập nhật và thiết thực. Hy vọng sẽ có thêm nhiều bài viết chuyên sâu như thế này.",
+            htmlContent: "<p>Thông tin rất cập nhật và thiết thực. Hy vọng sẽ có thêm nhiều bài viết <strong>chuyên sâu</strong> như thế này.</p>",
             createdAt: "2024-07-04T15:45:00Z",
-            likes: 3
+            likes: 3,
+            replies: []
         },
         {
             id: 3,
@@ -94,9 +145,24 @@ export default function DetailArticle() {
                 name: "Phạm Thị Lan",
                 avatar: "https://picsum.photos/50/50?random=user3"
             },
-            content: "Các giải pháp công nghệ thực sự ấn tượng. Mong muốn được áp dụng trong thực tế sớm.",
+            content: "Các giải pháp công nghệ thực sự ấn tượng. Mong muốn được áp dụng trong thực tế sớm nhất có thể.",
+            htmlContent: "<p>Các giải pháp công nghệ thực sự ấn tượng. Mong muốn được áp dụng trong thực tế <em>sớm nhất có thể</em>.</p>",
             createdAt: "2024-07-04T16:20:00Z",
-            likes: 7
+            likes: 7,
+            replies: [
+                {
+                    id: 31,
+                    user: {
+                        name: "Trần Văn Đức",
+                        avatar: "https://picsum.photos/50/50?random=user4"
+                    },
+                    content: "Mình cũng mong chờ việc này. Đặc biệt là công nghệ AI trong xử lý nước.",
+                    htmlContent: "<p>Mình cũng mong chờ việc này. Đặc biệt là công nghệ <strong>AI</strong> trong xử lý nước.</p>",
+                    createdAt: "2024-07-04T16:35:00Z",
+                    likes: 1,
+                    parentId: 3
+                }
+            ]
         }
     ];
 
@@ -131,6 +197,16 @@ export default function DetailArticle() {
             setComments(mockComments);
             setLikeCount(mockArticle.likes);
             setIsLoading(false);
+
+            // Initialize comment likes
+            const likes = {};
+            mockComments.forEach(comment => {
+                likes[comment.id] = comment.likes;
+                comment.replies?.forEach(reply => {
+                    likes[reply.id] = reply.likes;
+                });
+            });
+            setCommentLikes(likes);
         }, 1000);
     }, [slug]);
 
@@ -168,14 +244,67 @@ export default function DetailArticle() {
                     name: user?.name || "Anonymous",
                     avatar: user?.avatar || "https://picsum.photos/50/50?random=currentuser"
                 },
-                content: newComment,
+                content: newComment.replace(/<[^>]*>/g, ''), // Remove HTML tags for plain text
+                htmlContent: newComment,
                 createdAt: new Date().toISOString(),
-                likes: 0
+                likes: 0,
+                replies: []
             };
 
             setComments([comment, ...comments]);
+            setCommentLikes(prev => ({ ...prev, [comment.id]: 0 }));
             setNewComment("");
         }
+    };
+
+    const handleReply = (commentId) => {
+        if (!isLogin) {
+            alert("Vui lòng đăng nhập để phản hồi!");
+            return;
+        }
+
+        if (replyContent.trim()) {
+            const reply = {
+                id: Date.now(),
+                user: {
+                    name: user?.name || "Anonymous",
+                    avatar: user?.avatar || "https://picsum.photos/50/50?random=currentuser"
+                },
+                content: replyContent.replace(/<[^>]*>/g, ''), // Remove HTML tags for plain text
+                htmlContent: replyContent,
+                createdAt: new Date().toISOString(),
+                likes: 0,
+                parentId: commentId
+            };
+
+            setComments(prevComments => {
+                return prevComments.map(comment => {
+                    if (comment.id === commentId) {
+                        return {
+                            ...comment,
+                            replies: [...(comment.replies || []), reply]
+                        };
+                    }
+                    return comment;
+                });
+            });
+
+            setCommentLikes(prev => ({ ...prev, [reply.id]: 0 }));
+            setReplyContent("");
+            setReplyingTo(null);
+        }
+    };
+
+    const handleCommentLike = (commentId) => {
+        if (!isLogin) {
+            alert("Vui lòng đăng nhập để thích bình luận!");
+            return;
+        }
+
+        setCommentLikes(prev => ({
+            ...prev,
+            [commentId]: (prev[commentId] || 0) + 1
+        }));
     };
 
     const formatDate = (dateString) => {
@@ -197,7 +326,7 @@ export default function DetailArticle() {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                    <FaSpinner className="animate-spin h-12 w-12 text-blue-600 mx-auto" />
                     <p className="mt-4 text-gray-600">Đang tải bài viết...</p>
                 </div>
             </div>
@@ -227,9 +356,7 @@ export default function DetailArticle() {
                             <a href="/" className="hover:text-blue-600">Trang chủ</a>
                         </li>
                         <li>
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                            </svg>
+                            <FaChevronRight className="w-4 h-4" />
                         </li>
                         <li>
                             <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
@@ -264,22 +391,15 @@ export default function DetailArticle() {
                                 <p className="text-sm text-gray-500">{formatDate(article.publishedAt)}</p>
                                 <div className="flex items-center space-x-4 mt-1 text-sm text-gray-500">
                                     <span className="flex items-center">
-                                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                                            <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                                        </svg>
+                                        <FaEye className="w-4 h-4 mr-1" />
                                         {article.views}
                                     </span>
                                     <span className="flex items-center">
-                                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                                        </svg>
+                                        <FaHeart className="w-4 h-4 mr-1" />
                                         {likeCount}
                                     </span>
                                     <span className="flex items-center">
-                                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
-                                        </svg>
+                                        <FaComment className="w-4 h-4 mr-1" />
                                         {comments.length}
                                     </span>
                                 </div>
@@ -328,14 +448,7 @@ export default function DetailArticle() {
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     }`}
                             >
-                                <svg
-                                    className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`}
-                                    fill={isLiked ? 'currentColor' : 'none'}
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                </svg>
+                                {isLiked ? <FaHeart className="w-5 h-5" /> : <FaRegHeart className="w-5 h-5" />}
                                 <span>{isLiked ? 'Đã thích' : 'Thích'}</span>
                                 <span className="bg-white px-2 py-1 rounded-full text-xs">
                                     {likeCount}
@@ -349,23 +462,14 @@ export default function DetailArticle() {
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     }`}
                             >
-                                <svg
-                                    className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`}
-                                    fill={isSaved ? 'currentColor' : 'none'}
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                                </svg>
+                                {isSaved ? <FaBookmark className="w-5 h-5" /> : <FaRegBookmark className="w-5 h-5" />}
                                 <span>{isSaved ? 'Đã lưu' : 'Lưu'}</span>
                             </button>
                         </div>
 
                         <div className="flex items-center space-x-4">
                             <button className="flex items-center space-x-2 px-4 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                                </svg>
+                                <FaShare className="w-5 h-5" />
                                 <span>Chia sẻ</span>
                             </button>
                         </div>
@@ -374,7 +478,8 @@ export default function DetailArticle() {
 
                 {/* Comments Section */}
                 <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-                    <h3 className="text-xl font-bold text-gray-900 mb-6">
+                    <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                        <FaComment className="w-5 h-5 mr-2" />
                         Bình luận ({comments.length})
                     </h3>
 
@@ -389,19 +494,22 @@ export default function DetailArticle() {
                                     onError={handleImageError}
                                 />
                                 <div className="flex-1">
-                                    <textarea
+                                    <ReactQuill
+                                        theme="snow"
                                         value={newComment}
-                                        onChange={(e) => setNewComment(e.target.value)}
+                                        onChange={setNewComment}
                                         placeholder="Chia sẻ ý kiến của bạn..."
-                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                                        rows="3"
+                                        modules={quillModules}
+                                        formats={quillFormats}
+                                        className="bg-white"
                                     />
                                     <div className="flex justify-end mt-3">
                                         <button
                                             type="submit"
-                                            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+                                            className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
                                         >
-                                            Gửi bình luận
+                                            <FaPaperPlane className="w-4 h-4" />
+                                            <span>Gửi bình luận</span>
                                         </button>
                                     </div>
                                 </div>
@@ -409,7 +517,8 @@ export default function DetailArticle() {
                         </form>
                     ) : (
                         <div className="mb-8 p-4 bg-gray-50 rounded-lg text-center">
-                            <p className="text-gray-600">
+                            <p className="text-gray-600 flex items-center justify-center">
+                                <FaUser className="w-4 h-4 mr-2" />
                                 <a href="/login" className="text-blue-600 hover:text-blue-700 font-medium">
                                     Đăng nhập
                                 </a>
@@ -421,34 +530,127 @@ export default function DetailArticle() {
                     {/* Comments List */}
                     <div className="space-y-6">
                         {comments.map((comment) => (
-                            <div key={comment.id} className="flex space-x-4">
-                                <img
-                                    src={comment.user.avatar}
-                                    alt={comment.user.name}
-                                    className="w-10 h-10 rounded-full flex-shrink-0"
-                                    onError={handleImageError}
-                                />
-                                <div className="flex-1">
-                                    <div className="bg-gray-50 rounded-lg p-4">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <h4 className="font-semibold text-gray-900">{comment.user.name}</h4>
-                                            <span className="text-sm text-gray-500">
-                                                {formatDate(comment.createdAt)}
-                                            </span>
+                            <div key={comment.id} className="space-y-4">
+                                {/* Main Comment */}
+                                <div className="flex space-x-4">
+                                    <img
+                                        src={comment.user.avatar}
+                                        alt={comment.user.name}
+                                        className="w-10 h-10 rounded-full flex-shrink-0"
+                                        onError={handleImageError}
+                                    />
+                                    <div className="flex-1">
+                                        <div className="bg-gray-50 rounded-lg p-4">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <h4 className="font-semibold text-gray-900">{comment.user.name}</h4>
+                                                <span className="text-sm text-gray-500">
+                                                    {formatDate(comment.createdAt)}
+                                                </span>
+                                            </div>
+                                            <div
+                                                className="text-gray-700 prose prose-sm max-w-none"
+                                                dangerouslySetInnerHTML={{ __html: comment.htmlContent }}
+                                            />
                                         </div>
-                                        <p className="text-gray-700">{comment.content}</p>
-                                    </div>
-                                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                                        <button className="hover:text-blue-600 flex items-center space-x-1">
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V9a2 2 0 00-2-2M5 20l7-7" />
-                                            </svg>
-                                            <span>Thích</span>
-                                            <span>({comment.likes})</span>
-                                        </button>
-                                        <button className="hover:text-blue-600">Trả lời</button>
+                                        <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
+                                            <button
+                                                onClick={() => handleCommentLike(comment.id)}
+                                                className="hover:text-blue-600 flex items-center space-x-1 transition-colors"
+                                            >
+                                                <FaThumbsUp className="w-4 h-4" />
+                                                <span>Thích</span>
+                                                <span>({commentLikes[comment.id] || comment.likes})</span>
+                                            </button>
+                                            <button
+                                                onClick={() => setReplyingTo(comment.id)}
+                                                className="hover:text-blue-600 flex items-center space-x-1 transition-colors"
+                                            >
+                                                <FaReply className="w-4 h-4" />
+                                                <span>Trả lời</span>
+                                            </button>
+                                        </div>
+
+                                        {/* Reply Form */}
+                                        {replyingTo === comment.id && isLogin && (
+                                            <div className="mt-4 ml-4 p-4 bg-gray-50 rounded-lg">
+                                                <div className="flex space-x-3">
+                                                    <img
+                                                        src={user?.avatar || "https://picsum.photos/50/50?random=currentuser"}
+                                                        alt="Your avatar"
+                                                        className="w-8 h-8 rounded-full flex-shrink-0"
+                                                        onError={handleImageError}
+                                                    />
+                                                    <div className="flex-1">
+                                                        <ReactQuill
+                                                            theme="snow"
+                                                            value={replyContent}
+                                                            onChange={setReplyContent}
+                                                            placeholder="Viết phản hồi..."
+                                                            modules={quillModules}
+                                                            formats={quillFormats}
+                                                            className="bg-white"
+                                                        />
+                                                        <div className="flex justify-end space-x-2 mt-3">
+                                                            <button
+                                                                onClick={() => setReplyingTo(null)}
+                                                                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                                                            >
+                                                                Hủy
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleReply(comment.id)}
+                                                                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                                            >
+                                                                <FaPaperPlane className="w-3 h-3" />
+                                                                <span>Gửi</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
+
+                                {/* Replies */}
+                                {comment.replies && comment.replies.length > 0 && (
+                                    <div className="ml-14 space-y-4">
+                                        {comment.replies.map((reply) => (
+                                            <div key={reply.id} className="flex space-x-4">
+                                                <img
+                                                    src={reply.user.avatar}
+                                                    alt={reply.user.name}
+                                                    className="w-8 h-8 rounded-full flex-shrink-0"
+                                                    onError={handleImageError}
+                                                />
+                                                <div className="flex-1">
+                                                    <div className="bg-blue-50 rounded-lg p-3">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <h5 className="font-semibold text-gray-900 text-sm">{reply.user.name}</h5>
+                                                            <span className="text-xs text-gray-500">
+                                                                {formatDate(reply.createdAt)}
+                                                            </span>
+                                                        </div>
+                                                        <div
+                                                            className="text-gray-700 prose prose-sm max-w-none"
+                                                            dangerouslySetInnerHTML={{ __html: reply.htmlContent }}
+                                                        />
+                                                    </div>
+                                                    <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                                                        <button
+                                                            onClick={() => handleCommentLike(reply.id)}
+                                                            className="hover:text-blue-600 flex items-center space-x-1 transition-colors"
+                                                        >
+                                                            <FaThumbsUp className="w-3 h-3" />
+                                                            <span>Thích</span>
+                                                            <span>({commentLikes[reply.id] || reply.likes})</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
