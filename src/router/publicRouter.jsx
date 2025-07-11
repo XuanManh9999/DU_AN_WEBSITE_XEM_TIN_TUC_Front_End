@@ -8,6 +8,7 @@ import CategoryPage from "../component/CategoryPage";
 import SavedArticles from "../component/SavedArticles";
 import LikedArticles from "../component/LikedArticles";
 import AccountManagement from "../component/AccountManagement";
+import SearchResults from "../component/SearchResults";
 import URL from "../utils/url";
 
 const publicRouters = [
@@ -31,6 +32,11 @@ const publicRouters = [
       {
         path: "/quan-ly-tai-khoan",
         element: <AccountManagement />,
+      },
+      // Search results route
+      {
+        path: "/tim-kiem",
+        element: <SearchResults />,
       },
       // Article detail routes (specific routes first)
       {

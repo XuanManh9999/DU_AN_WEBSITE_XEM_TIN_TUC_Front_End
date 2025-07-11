@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { selectIsLogin, selectUser } from "../../redux/slice/useSlice";
 import { logout } from "../../redux/action/userAction";
 import { useDispatch } from "react-redux";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   FaNewspaper,
   FaSearch,
@@ -14,12 +14,15 @@ import {
   FaGlobeAmericas,
   FaBolt
 } from 'react-icons/fa';
+import { getAllCategories } from "../../services/category";
+import { searchArticles as searchArticlesAPI } from "../../services/articles";
+import { Link } from 'react-router-dom';
 
 export default function Header() {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-
+  const [dataCategories, setDataCategories] = useState([]);
   // Search states
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -87,19 +90,20 @@ export default function Header() {
     }
   ];
 
-  // Mock search function với delay để simulate API call
+  // Search function using real API
   const searchArticles = async (term) => {
     if (!term.trim()) return [];
 
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    const filtered = mockArticles.filter(article =>
-      article.title.toLowerCase().includes(term.toLowerCase()) ||
-      article.category.toLowerCase().includes(term.toLowerCase())
-    );
-
-    return filtered.slice(0, 5); // Chỉ hiển thị 5 kết quả đầu
+    try {
+      const response = await searchArticlesAPI(term, 5, 0, "createAt", "desc");
+      if (response && response.status === 200) {
+        return response.data || [];
+      }
+      return [];
+    } catch (error) {
+      console.error('Search error:', error);
+      return [];
+    }
   };
 
   // Debounce search with loading
@@ -128,6 +132,15 @@ export default function Header() {
 
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
+
+
+  useEffect(() => {
+    const fetchDataCategories = async () => {
+      const response = await getAllCategories();
+      setDataCategories(response?.data);
+    };
+    fetchDataCategories();
+  }, []);
 
   // Close search when clicking outside
   useEffect(() => {
@@ -376,37 +389,37 @@ export default function Header() {
         {/* Desktop Navigation */}
         <nav className="flex-1 mx-10 hidden md:block">
           <ul className="flex justify-center items-center gap-1 list-none m-0 p-0">
-            {menuItems.map((item, index) => (
+            {dataCategories?.map((item, index) => (
               <li
                 key={index}
                 className="relative"
                 onMouseEnter={() => handleMouseEnter(index)}
                 onMouseLeave={handleMouseLeave}
               >
-                <a
-                  href={item.path}
+                <Link
+                  to={`/${item.slug}`}
                   className="text-white no-underline px-4 py-5 flex items-center font-medium text-sm transition-all duration-300 uppercase tracking-wide hover:bg-white/10 hover:text-yellow-400 focus:outline-2 focus:outline-yellow-400 focus:outline-offset-2"
                 >
-                  {item.title}
-                  {item.submenu && (
+                  {item?.name?.toUpperCase() || "TIN TỨC"}
+                  {item?.children && (
                     <span className={`ml-2 text-xs transition-transform duration-300 ${activeDropdown === index ? 'rotate-180' : ''}`}>
                       ▼
                     </span>
                   )}
-                </a>
-                {item.submenu && (
+                </Link>
+                {item?.children && (
                   <ul className={`absolute top-full left-0 bg-white rounded-lg shadow-2xl list-none m-0 py-3 min-w-[200px] z-50 transition-all duration-300 ${activeDropdown === index
                     ? 'opacity-100 visible translate-y-0'
                     : 'opacity-0 invisible -translate-y-3'
                     }`}>
-                    {item.submenu.map((subItem, subIndex) => (
+                    {item?.children?.map((subItem, subIndex) => (
                       <li key={subIndex} className="m-0">
-                        <a
-                          href={subItem.path}
+                        <Link
+                          to={`/${subItem.slug}`}
                           className="text-gray-800 no-underline px-5 py-3 block text-sm transition-all duration-300 hover:bg-gray-100 hover:text-blue-700 hover:pl-6"
                         >
-                          {subItem.title}
-                        </a>
+                          {subItem?.name || "TIN TỨC"}
+                        </Link>
                       </li>
                     ))}
                   </ul>
@@ -465,12 +478,12 @@ export default function Header() {
                         {searchResults.map((article, index) => (
                           <li key={article.id} className="mb-1">
                             <a
-                              href={`/tin-tuc/${article.slug}`}
+                              href={`/tin-tuc/${article.slug || article.id}`}
                               className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 hover:bg-gray-50 no-underline ${selectedIndex === index ? 'bg-blue-50 border-l-4 border-blue-500' : ''
                                 }`}
                             >
                               <img
-                                src={article.image}
+                                src={article.thumbnail || `https://picsum.photos/100/80?random=${article.id}`}
                                 alt={article.title}
                                 className="w-12 h-12 object-cover rounded-md flex-shrink-0"
                                 onError={handleImageError}
@@ -485,7 +498,7 @@ export default function Header() {
                                   {article.title}
                                 </p>
                                 <p className="text-blue-600 text-xs mt-1 font-medium">
-                                  {article.category}
+                                  {article.category?.name || "Tin tức"}
                                 </p>
                               </div>
                             </a>
@@ -681,12 +694,12 @@ export default function Header() {
                         {searchResults.map((article, index) => (
                           <li key={article.id} className="mb-2">
                             <a
-                              href={`/tin-tuc/${article.slug}`}
+                              href={`/tin-tuc/${article.slug || article.id}`}
                               className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 hover:bg-gray-50 no-underline ${selectedIndex === index ? 'bg-blue-50 border-l-4 border-blue-500' : ''
                                 }`}
                             >
                               <img
-                                src={article.image}
+                                src={article.thumbnail || `https://picsum.photos/100/80?random=${article.id}`}
                                 alt={article.title}
                                 className="w-10 h-10 object-cover rounded-md flex-shrink-0"
                                 onError={handleImageError}
@@ -701,7 +714,7 @@ export default function Header() {
                                   {article.title}
                                 </p>
                                 <p className="text-blue-600 text-xs mt-1 font-medium">
-                                  {article.category}
+                                  {article.category?.name || "Tin tức"}
                                 </p>
                               </div>
                             </a>

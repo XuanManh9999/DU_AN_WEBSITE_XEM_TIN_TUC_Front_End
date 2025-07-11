@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Pagination from "../Pagination";
-
+import { getAllArticles } from "../../services/articles";
 export default function Home() {
   const [activeTab, setActiveTab] = useState(0);
 
@@ -8,9 +8,60 @@ export default function Home() {
   const [sidebarPage, setSidebarPage] = useState(1);
   const [newsListPage, setNewsListPage] = useState(1);
   const [popularNewsPage, setPopularNewsPage] = useState(1);
-
+  const [newPosts, setNewPosts] = useState([]);
   const itemsPerPage = 5;
   const sidebarItemsPerPage = 7;
+
+  // API states
+  const [latestNews, setLatestNews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [totalLatestNews, setTotalLatestNews] = useState(0);
+
+  // Helper function to format date with time and timezone +7
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    // Add 7 hours for Vietnam timezone
+    const vietnamTime = new Date(date.getTime() + (7 * 60 * 60 * 1000));
+
+    return vietnamTime.toLocaleString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  };
+
+  // Fetch latest news from API
+  const fetchLatestNews = async (page = 1) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const offset = (page - 1) * sidebarItemsPerPage;
+      const response = await getAllArticles(sidebarItemsPerPage, offset, "createAt", "desc");
+      console.log("Check response", response);
+      if (response && response.status === 200) {
+        setLatestNews(response?.data);
+        setTotalLatestNews(response.totalItems);
+      } else {
+        setError('Không thể tải tin mới nhất');
+      }
+    } catch (err) {
+      setError('Lỗi khi tải dữ liệu');
+      console.error('Error fetching latest news:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // useEffect to fetch data when component mounts or page changes
+  useEffect(() => {
+    fetchLatestNews(sidebarPage);
+  }, [sidebarPage]);
 
   const handleImageError = (e) => {
     e.target.src = "data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='16' fill='%23374151' text-anchor='middle' dy='.3em'%3EHình ảnh%3C/text%3E%3C/svg%3E";
@@ -384,6 +435,8 @@ export default function Home() {
   const newsListTotalPages = Math.ceil(allNewsList.length / itemsPerPage);
   const popularNewsTotalPages = Math.ceil(allPopularNews.length / itemsPerPage);
 
+
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Main Content Area */}
@@ -410,7 +463,7 @@ export default function Home() {
                   </p>
                   <div className="flex items-center gap-4 text-base font-medium">
                     <span className="bg-yellow-400 text-blue-900 px-4 py-1 rounded-full shadow">Tin Nổi Bật</span>
-                    <span className="bg-white/20 px-3 py-1 rounded-full">07/2025</span>
+                    <span className="bg-white/20 px-3 py-1 rounded-full">{new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
                   </div>
                 </div>
                 <div className="absolute top-6 right-6 bg-yellow-400 text-blue-900 px-4 py-2 rounded-full font-bold shadow-lg text-lg z-20 animate-bounce">
@@ -504,32 +557,48 @@ export default function Home() {
               <div className="p-6">
                 <h3 className="font-bold text-lg mb-4 text-gray-900">Tin mới nhất</h3>
                 <div className="space-y-4">
-                  {getSidebarNews().map((news) => (
-                    <div key={news.id} className="group cursor-pointer">
-                      <a href={`/tin-tuc/${news.slug || news.id}`}>
-                        <div className="flex items-start gap-2 mb-2">
-                          <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
-                          <h4 className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors text-sm line-clamp-2">
-                            {news.title}
-                          </h4>
-                        </div>
-                        <p className="text-xs text-gray-500 ml-4">{news.date}</p>
-                      </a>
-                    </div>
-                  ))}
+                  {loading ? (
+                    <p>Đang tải tin mới nhất...</p>
+                  ) : error ? (
+                    <p className="text-red-500">{error}</p>
+                  ) : (
+                    latestNews?.map((news) => (
+                      <div key={news.id} className="group cursor-pointer">
+                        <a href={`/tin-tuc/${news.slug || news.id}`}>
+                          <div className="flex items-start gap-2 mb-2">
+                            <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+                            <h4 className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors text-sm line-clamp-2">
+                              {news.title}
+                            </h4>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4 text-xs text-gray-500">
+                            {news.category && (
+                              <>
+                                <span className="bg-gray-100 px-2 py-1 rounded text-xs">{news.category.name}</span>
+                                <span>•</span>
+                              </>
+                            )}
+                            <span>{formatDate(news.createAt)}</span>
+                          </div>
+                        </a>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 
               {/* Sidebar Pagination */}
-              <div className="border-t border-gray-200">
-                <Pagination
-                  currentPage={sidebarPage}
-                  totalPages={sidebarTotalPages}
-                  onPageChange={setSidebarPage}
-                  itemsPerPage={sidebarItemsPerPage}
-                  totalItems={allSidebarNews.length}
-                />
-              </div>
+              {!loading && !error && (
+                <div className="border-t border-gray-200">
+                  <Pagination
+                    currentPage={sidebarPage}
+                    totalPages={Math.ceil(totalLatestNews / sidebarItemsPerPage)}
+                    onPageChange={setSidebarPage}
+                    itemsPerPage={sidebarItemsPerPage}
+                    totalItems={totalLatestNews}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Additional Banners */}

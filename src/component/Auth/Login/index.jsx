@@ -242,14 +242,7 @@ export default function Login() {
               </Form.Item>
 
               <div className="flex justify-between items-center mb-6">
-                <Form.Item
-                  name="remember"
-                  valuePropName="checked"
-                  className="!mb-0">
-                  <Checkbox className="text-gray-600">
-                    Ghi nhớ đăng nhập
-                  </Checkbox>
-                </Form.Item>
+
                 <Link
                   to={URL.AUTH.FORGOT_PASSWORD}
                   className="text-blue-500 hover:text-blue-700 font-medium">
