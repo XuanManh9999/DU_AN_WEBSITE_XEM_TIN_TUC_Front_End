@@ -1,39 +1,28 @@
 import React, { useState, useEffect } from "react";
 import Pagination from "../Pagination";
 import { getAllArticles } from "../../services/articles";
+import { capitalizeWords, formatDate } from "../../helper/format";
 export default function Home() {
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(
+    localStorage.getItem("categories") ? JSON.parse(localStorage.getItem("categories"))[0]?.id : 0
+  );
 
   // Pagination states
+  const [categories, setCategories] = useState([]);
   const [sidebarPage, setSidebarPage] = useState(1);
   const [newsListPage, setNewsListPage] = useState(1);
   const [popularNewsPage, setPopularNewsPage] = useState(1);
-  const [newPosts, setNewPosts] = useState([]);
+  const [postOutstandings, setPostOutstandings] = useState([]);
   const itemsPerPage = 5;
   const sidebarItemsPerPage = 7;
-
   // API states
   const [latestNews, setLatestNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [totalLatestNews, setTotalLatestNews] = useState(0);
+  const [totalPostOutstandings, setTotalPostOutstandings] = useState(0);
 
-  // Helper function to format date with time and timezone +7
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    // Add 7 hours for Vietnam timezone
-    const vietnamTime = new Date(date.getTime() + (7 * 60 * 60 * 1000));
 
-    return vietnamTime.toLocaleString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-  };
 
   // Fetch latest news from API
   const fetchLatestNews = async (page = 1) => {
@@ -43,7 +32,6 @@ export default function Home() {
 
       const offset = (page - 1) * sidebarItemsPerPage;
       const response = await getAllArticles(sidebarItemsPerPage, offset, "createAt", "desc");
-      console.log("Check response", response);
       if (response && response.status === 200) {
         setLatestNews(response?.data);
         setTotalLatestNews(response.totalItems);
@@ -57,20 +45,58 @@ export default function Home() {
       setLoading(false);
     }
   };
+  const fetchPostOutstandings = async (page = 1) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const offset = (page - 1) * itemsPerPage;
+      const response = await getAllArticles(itemsPerPage, offset, "view", "desc");
+      if (response && response.status === 200) {
+        setPostOutstandings(response?.data);
+        setTotalPostOutstandings(response.totalItems);
+      }
+    } catch (err) {
+      console.error('Error fetching post outstandings:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
 
   // useEffect to fetch data when component mounts or page changes
   useEffect(() => {
     fetchLatestNews(sidebarPage);
   }, [sidebarPage]);
 
+  useEffect(() => {
+    fetchPostOutstandings(popularNewsPage);
+  }, [popularNewsPage]);
+
+
+  useEffect(() => {
+    const fetchCategory = async () => {
+      if (localStorage.getItem("categories")) {
+        const formatCategory = JSON.parse(localStorage.getItem("categories"))?.map(item => ({
+          id: item?.id,
+          name: `${item?.name != null && item?.name.toLowerCase() !== "tin tức"
+            ? capitalizeWords(`Tin tức ${item?.name.toLowerCase()}`)
+            : capitalizeWords(item?.name?.toLowerCase())}`,
+          slug: item?.slug,
+        }));
+        setCategories(formatCategory);
+      }
+    }
+    fetchCategory();
+  }, [])
+
   const handleImageError = (e) => {
     e.target.src = "data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='16' fill='%23374151' text-anchor='middle' dy='.3em'%3EHình ảnh%3C/text%3E%3C/svg%3E";
   };
-
   const heroNews = [
     {
       id: 1,
-      title: "Ứng dụng Chăm sóc khách hàng SAWACO",
+      title: "Tin tức mới nhất",
       image: "https://picsum.photos/800/400?random=1",
       content: "Hội nghị Ban Thường vụ Hội Cấp Thoát nước Việt Nam nhiệm kỳ VI (2020 -2025)",
       date: "04/07/2025",
@@ -203,13 +229,7 @@ export default function Home() {
     }
   ];
 
-  const tabs = [
-    "Chuyên mục xem nhiều",
-    "Hoạt động sản xuất kinh doanh",
-    "Thông tin báo chí",
-    "Hoạt động công đoàn - Đoàn thanh niên",
-    "Sawaco phát triển vì cộng đồng"
-  ];
+
 
   // Expanded news list data
   const allNewsList = [
@@ -472,7 +492,7 @@ export default function Home() {
               </div>
 
               {/* Thanh điều hướng nhỏ các tin nổi bật */}
-              <div className="flex gap-2 p-4 bg-gradient-to-r from-yellow-100 via-white to-blue-100">
+              {/* <div className="flex gap-2 p-4 bg-gradient-to-r from-yellow-100 via-white to-blue-100">
                 {heroNews.map((news, index) => (
                   <div key={news.id} className="flex-1 cursor-pointer group transition-transform hover:scale-105">
                     <a href={`/tin-tuc/${news.slug || news.id}`}>
@@ -486,22 +506,22 @@ export default function Home() {
                     </a>
                   </div>
                 ))}
-              </div>
+              </div> */}
             </div>
 
             {/* Tabs Navigation */}
             <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
               <div className="flex border-b overflow-x-auto">
-                {tabs.map((tab, index) => (
+                {categories?.map((tab) => (
                   <button
-                    key={index}
-                    onClick={() => setActiveTab(index)}
-                    className={`flex-shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === index
+                    key={tab?.id}
+                    onClick={() => setActiveTab(tab?.id)}
+                    className={`flex-shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${activeTab === tab?.id
                       ? 'border-blue-600 text-blue-600 bg-blue-50'
                       : 'border-transparent text-gray-600 hover:text-gray-900'
                       }`}
                   >
-                    {tab}
+                    {tab?.name}
                   </button>
                 ))}
               </div>
@@ -574,11 +594,11 @@ export default function Home() {
                           <div className="flex items-center gap-2 ml-4 text-xs text-gray-500">
                             {news.category && (
                               <>
-                                <span className="bg-gray-100 px-2 py-1 rounded text-xs">{news.category.name}</span>
+                                <span className="bg-gray-100 px-2 py-1 rounded text-xs">{news?.tags?.length > 0 ? news?.tags?.map((tag) => tag.name).join(', ') : ''}</span>
                                 <span>•</span>
                               </>
                             )}
-                            <span>{formatDate(news.createAt)}</span>
+                            <span>{formatDate(news?.createAt)}</span>
                           </div>
                         </a>
                       </div>
@@ -668,45 +688,55 @@ export default function Home() {
             <div className="p-6">
               <h3 className="font-bold text-lg mb-6 text-blue-600">Xem nhiều</h3>
               <div className="space-y-4">
-                {getPopularNews().map((news) => (
-                  <div key={news.id} className="flex gap-4 group cursor-pointer pb-4 border-b border-gray-100 last:border-b-0">
-                    <a href={`/tin-tuc/${news.slug || news.id}`} className="flex gap-4 w-full">
-                      <img
-                        src={news.image}
-                        alt=""
-                        className="w-24 h-18 object-cover rounded flex-shrink-0"
-                        onError={handleImageError}
-                      />
-                      <div className="flex-1">
-                        <h3 className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-2">
-                          {news.title}
-                        </h3>
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <span>{news.date}</span>
-                          <span>•</span>
-                          <span className="flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                              <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                            </svg>
-                            {news.views}
-                          </span>
+                {loading ? (
+                  <p>Đang tải bài viết xem nhiều...</p>
+                ) : error ? (
+                  <p className="text-red-500">{error}</p>
+                ) : postOutstandings && postOutstandings.length > 0 ? (
+                  postOutstandings.map((news) => (
+                    <div key={news.id} className="flex gap-4 group cursor-pointer pb-4 border-b border-gray-100 last:border-b-0">
+                      <a href={`/tin-tuc/${news.slug || news.id}`} className="flex gap-4 w-full">
+                        <img
+                          src={news?.image || "https://picsum.photos/300/200?random=36"}
+                          alt={news?.title || "Ảnh bài viết"}
+                          className="w-24 h-18 object-cover rounded flex-shrink-0"
+                          onError={handleImageError}
+                        />
+                        <div className="flex-1">
+                          <h3 className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-2">
+                            {news.title}
+                          </h3>
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <span>{formatDate(news?.createAt)}</span>
+                            <span>•</span>
+                            <span className="flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                              </svg>
+                              {news?.view}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    </a>
-                  </div>
-                ))}
+                      </a>
+                    </div>
+                  ))
+                ) : (
+                  <p>Không có bài viết nào.</p>
+                )}
               </div>
             </div>
 
             {/* Popular News Pagination */}
-            <Pagination
-              currentPage={popularNewsPage}
-              totalPages={popularNewsTotalPages}
-              onPageChange={setPopularNewsPage}
-              itemsPerPage={itemsPerPage}
-              totalItems={allPopularNews.length}
-            />
+            {!loading && !error && totalPostOutstandings > 0 && (
+              <Pagination
+                currentPage={popularNewsPage}
+                totalPages={Math.ceil(totalPostOutstandings / itemsPerPage)}
+                onPageChange={setPopularNewsPage}
+                itemsPerPage={itemsPerPage}
+                totalItems={totalPostOutstandings}
+              />
+            )}
           </div>
         </div>
       </div>

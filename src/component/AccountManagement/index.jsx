@@ -154,12 +154,12 @@ const AccountManagement = () => {
                         dispatch(setUser(currentUser?.data, true));
                         showToast.success('Cập nhật thành công!');
                     } else {
-                        showToast.error('Có lỗi xảy ra khi cập nhật thông tin!');
+                        showToast.error('Đã có lỗi xảy ra khi cập nhật thông tin!');
                     }
                 }
 
             } else {
-                showToast.error('Có lỗi xảy ra khi cập nhật thông tin!');
+                showToast.error('Tên người dùng đã tồn tại, vui lòng chọn tên khác!');
             }
 
         } catch (error) {

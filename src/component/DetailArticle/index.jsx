@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { selectIsLogin, selectUser } from "../../redux/slice/useSlice";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import { getArticleBySlug } from "../../services/articles";
+import { showToast } from "../../utils/toast";
+import { capitalizeWords, formatDate } from "../../helper/format";
 import {
     FaEye,
     FaHeart,
@@ -20,6 +23,20 @@ import {
     FaUser
 } from 'react-icons/fa';
 
+// Cấu hình ReactQuill
+const quillModules = {
+    toolbar: [
+        ['bold', 'italic', 'underline'],
+        ['link'],
+        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+        ['clean']
+    ],
+};
+
+const quillFormats = [
+    'bold', 'italic', 'underline', 'link', 'list', 'bullet'
+];
+
 export default function DetailArticle() {
     const { slug } = useParams();
     const [article, setArticle] = useState(null);
@@ -32,75 +49,27 @@ export default function DetailArticle() {
     const [replyingTo, setReplyingTo] = useState(null);
     const [replyContent, setReplyContent] = useState("");
     const [commentLikes, setCommentLikes] = useState({});
-
     const isLogin = useSelector(selectIsLogin);
     const user = useSelector(selectUser);
 
-    // Cấu hình ReactQuill
-    const quillModules = {
-        toolbar: [
-            ['bold', 'italic', 'underline'],
-            ['link'],
-            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-            ['clean']
-        ],
+    // Helper function to format date with timezone +7
+    const formatDate = (dateString) => {
+        if (!dateString) return '';
+
+        const date = new Date(dateString);
+
+        return date.toLocaleString('vi-VN', {
+            timeZone: 'Asia/Ho_Chi_Minh',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
     };
 
-    const quillFormats = [
-        'bold', 'italic', 'underline', 'link', 'list', 'bullet'
-    ];
-
-    // Mock data - trong thực tế sẽ fetch từ API
-    const mockArticle = {
-        id: 1,
-        title: "Đảm bảo cấp nước sạch trong mùa mưa - Giải pháp bền vững cho thành phố",
-        slug: "dam-bao-cap-nuoc-sach-trong-mua-mua",
-        content: `
-      <p>Việc đảm bảo cấp nước sạch trong mùa mưa là một trong những thách thức lớn nhất đối với các thành phố hiện nay. Với biến đổi khí hậu ngày càng gay gắt, việc chuẩn bị các giải pháp bền vững trở nên cấp thiết hơn bao giờ hết.</p>
-      
-      <h2>Những thách thức chính</h2>
-      <p>Mùa mưa mang lại nhiều thách thức đối với hệ thống cấp nước:</p>
-      <ul>
-        <li>Nguồn nước bị ô nhiễm do nước mưa cuốn theo các chất thải</li>
-        <li>Hệ thống lọc nước quá tải do lượng nước lớn</li>
-        <li>Nguy cơ nhiễm bẩn từ các khu vực ngập lụt</li>
-        <li>Khó khăn trong việc vận hành và bảo trì thiết bị</li>
-      </ul>
-      
-      <h2>Giải pháp công nghệ hiện đại</h2>
-      <p>Các công nghệ hiện đại đang được áp dụng để giải quyết các vấn đề này:</p>
-      <ul>
-        <li>Hệ thống lọc nước thông minh với AI</li>
-        <li>Công nghệ xử lý nước tiên tiến</li>
-        <li>Hệ thống giám sát chất lượng nước real-time</li>
-        <li>Ứng dụng IoT trong quản lý hệ thống cấp nước</li>
-      </ul>
-      
-      <h2>Lợi ích đối với cộng đồng</h2>
-      <p>Việc đảm bảo cấp nước sạch mang lại nhiều lợi ích:</p>
-      <ul>
-        <li>Bảo vệ sức khỏe cộng đồng</li>
-        <li>Phát triển kinh tế bền vững</li>
-        <li>Nâng cao chất lượng cuộc sống</li>
-        <li>Bảo vệ môi trường</li>
-      </ul>
-      
-      <p>Đây là một dự án quan trọng đòi hỏi sự hợp tác chặt chẽ giữa các cơ quan chức năng, doanh nghiệp và người dân để đảm bảo thành công.</p>
-    `,
-        image: "https://picsum.photos/1200/600?random=1",
-        author: {
-            name: "Nguyễn Văn An",
-            avatar: "https://picsum.photos/100/100?random=author1",
-            role: "Chuyên gia cấp nước"
-        },
-        publishedAt: "2024-07-04T10:00:00Z",
-        category: "Công nghệ",
-        tags: ["Nước sạch", "Mùa mưa", "Công nghệ", "Môi trường"],
-        views: 1245,
-        likes: 89,
-        comments: 23
-    };
-
+    // Mock comments data (keep for now since no API yet)
     const mockComments = [
         {
             id: 1,
@@ -166,6 +135,7 @@ export default function DetailArticle() {
         }
     ];
 
+    // Mock related articles (keep for now since no API yet)
     const relatedArticles = [
         {
             id: 2,
@@ -191,28 +161,45 @@ export default function DetailArticle() {
     ];
 
     useEffect(() => {
-        // Simulate API call
-        setTimeout(() => {
-            setArticle(mockArticle);
-            setComments(mockComments);
-            setLikeCount(mockArticle.likes);
-            setIsLoading(false);
+        const fetchArticle = async () => {
+            try {
+                setIsLoading(true);
+                const response = await getArticleBySlug(slug);
+                if (response && response.status === 200) {
+                    setArticle(response?.data);
+                    setLikeCount(response?.data?.quantityLike || 0);
 
-            // Initialize comment likes
-            const likes = {};
-            mockComments.forEach(comment => {
-                likes[comment.id] = comment.likes;
-                comment.replies?.forEach(reply => {
-                    likes[reply.id] = reply.likes;
-                });
-            });
-            setCommentLikes(likes);
-        }, 1000);
+                    // Simulate loading comments (keep mock data for now)
+                    setTimeout(() => {
+                        setComments(mockComments);
+                        // Initialize comment likes
+                        const likes = {};
+                        mockComments.forEach(comment => {
+                            likes[comment.id] = comment.likes;
+                            comment.replies?.forEach(reply => {
+                                likes[reply.id] = reply.likes;
+                            });
+                        });
+                        setCommentLikes(likes);
+                    }, 500);
+                } else {
+                    showToast.error("Không tìm thấy bài viết hoặc đã xảy ra lỗi");
+                }
+            } catch (error) {
+                showToast.error("Đã xảy ra lỗi khi tải bài viết");
+                console.error("Error fetching article:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchArticle();
     }, [slug]);
+
+
 
     const handleLike = () => {
         if (!isLogin) {
-            alert("Vui lòng đăng nhập để thích bài viết!");
+            showToast.error("Vui lòng đăng nhập để thích bài viết!");
             return;
         }
 
@@ -222,7 +209,7 @@ export default function DetailArticle() {
 
     const handleSave = () => {
         if (!isLogin) {
-            alert("Vui lòng đăng nhập để lưu bài viết!");
+            showToast.error("Vui lòng đăng nhập để lưu bài viết!");
             return;
         }
 
@@ -233,7 +220,7 @@ export default function DetailArticle() {
     const handleComment = (e) => {
         e.preventDefault();
         if (!isLogin) {
-            alert("Vui lòng đăng nhập để bình luận!");
+            showToast.error("Vui lòng đăng nhập để bình luận!");
             return;
         }
 
@@ -241,7 +228,7 @@ export default function DetailArticle() {
             const comment = {
                 id: Date.now(),
                 user: {
-                    name: user?.name || "Anonymous",
+                    name: user?.username || "Anonymous",
                     avatar: user?.avatar || "https://picsum.photos/50/50?random=currentuser"
                 },
                 content: newComment.replace(/<[^>]*>/g, ''), // Remove HTML tags for plain text
@@ -259,7 +246,7 @@ export default function DetailArticle() {
 
     const handleReply = (commentId) => {
         if (!isLogin) {
-            alert("Vui lòng đăng nhập để phản hồi!");
+            showToast.error("Vui lòng đăng nhập để phản hồi!");
             return;
         }
 
@@ -267,7 +254,7 @@ export default function DetailArticle() {
             const reply = {
                 id: Date.now(),
                 user: {
-                    name: user?.name || "Anonymous",
+                    name: user?.username || "Anonymous",
                     avatar: user?.avatar || "https://picsum.photos/50/50?random=currentuser"
                 },
                 content: replyContent.replace(/<[^>]*>/g, ''), // Remove HTML tags for plain text
@@ -297,7 +284,7 @@ export default function DetailArticle() {
 
     const handleCommentLike = (commentId) => {
         if (!isLogin) {
-            alert("Vui lòng đăng nhập để thích bình luận!");
+            showToast.error("Vui lòng đăng nhập để thích bình luận!");
             return;
         }
 
@@ -305,17 +292,6 @@ export default function DetailArticle() {
             ...prev,
             [commentId]: (prev[commentId] || 0) + 1
         }));
-    };
-
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString("vi-VN", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
-        });
     };
 
     const handleImageError = (e) => {
@@ -338,9 +314,9 @@ export default function DetailArticle() {
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold text-gray-900 mb-4">Không tìm thấy bài viết</h1>
-                    <a href="/" className="text-blue-600 hover:text-blue-700">
+                    <Link to="/" className="text-blue-600 hover:text-blue-700">
                         Về trang chủ
-                    </a>
+                    </Link>
                 </div>
             </div>
         );
@@ -353,14 +329,14 @@ export default function DetailArticle() {
                 <nav className="mb-8 text-sm">
                     <ol className="flex items-center space-x-2 text-gray-500">
                         <li>
-                            <a href="/" className="hover:text-blue-600">Trang chủ</a>
+                            <Link to="/" className="hover:text-blue-600">Trang chủ</Link>
                         </li>
                         <li>
                             <FaChevronRight className="w-4 h-4" />
                         </li>
                         <li>
                             <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
-                                {article.category}
+                                {capitalizeWords(article?.category?.name) || "Tin tức"}
                             </span>
                         </li>
                     </ol>
@@ -370,29 +346,35 @@ export default function DetailArticle() {
                 <article className="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
                     <div className="p-8">
                         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
-                            {article.title}
+                            {article?.title}
                         </h1>
 
                         {/* Article Meta */}
                         <div className="flex items-center justify-between mb-6 pb-6 border-b border-gray-200">
                             <div className="flex items-center space-x-4">
                                 <img
-                                    src={article.author.avatar}
-                                    alt={article.author.name}
+                                    src={article?.author?.avatar || "https://picsum.photos/100/100?random=author1"}
+                                    alt={article?.author?.username || "Tác giả"}
                                     className="w-12 h-12 rounded-full"
                                     onError={handleImageError}
                                 />
                                 <div>
-                                    <p className="font-semibold text-gray-900">{article.author.name}</p>
-                                    <p className="text-sm text-gray-500">{article.author.role}</p>
+                                    <p className="font-semibold text-gray-900">
+                                        {article?.author?.username || "Tác giả"}
+                                    </p>
+                                    <p className="text-sm text-gray-500">
+                                        {article?.author?.email || ""}
+                                    </p>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-sm text-gray-500">{formatDate(article.publishedAt)}</p>
+                                <p className="text-sm text-gray-500">
+                                    {formatDate(article?.createAt)}
+                                </p>
                                 <div className="flex items-center space-x-4 mt-1 text-sm text-gray-500">
                                     <span className="flex items-center">
                                         <FaEye className="w-4 h-4 mr-1" />
-                                        {article.views}
+                                        {article?.view || 0}
                                     </span>
                                     <span className="flex items-center">
                                         <FaHeart className="w-4 h-4 mr-1" />
@@ -407,33 +389,37 @@ export default function DetailArticle() {
                         </div>
 
                         {/* Article Image */}
-                        <div className="mb-8">
-                            <img
-                                src={article.image}
-                                alt={article.title}
-                                className="w-full h-64 md:h-96 object-cover rounded-lg"
-                                onError={handleImageError}
-                            />
-                        </div>
+                        {/* {article?.thumbnail && (
+                            <div className="mb-8">
+                                <img
+                                    src={article?.thumbnail}
+                                    alt={article?.title}
+                                    className="w-full h-64 md:h-96 object-cover rounded-lg"
+                                    onError={handleImageError}
+                                />
+                            </div>
+                        )} */}
 
                         {/* Article Content */}
                         <div className="prose prose-lg max-w-none">
-                            <div dangerouslySetInnerHTML={{ __html: article.content }} />
+                            <div dangerouslySetInnerHTML={{ __html: article?.content || "" }} />
                         </div>
 
                         {/* Tags */}
-                        <div className="mt-8 pt-8 border-t border-gray-200">
-                            <div className="flex flex-wrap gap-2">
-                                {article.tags.map((tag, index) => (
-                                    <span
-                                        key={index}
-                                        className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
-                                    >
-                                        #{tag}
-                                    </span>
-                                ))}
+                        {article?.tags && article?.tags.length > 0 && (
+                            <div className="mt-8 pt-8 border-t border-gray-200">
+                                <div className="flex flex-wrap gap-2">
+                                    {article?.tags.map((tag, index) => (
+                                        <span
+                                            key={tag.id || index}
+                                            className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                                        >
+                                            # {tag.name}
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </article>
 
@@ -519,10 +505,10 @@ export default function DetailArticle() {
                         <div className="mb-8 p-4 bg-gray-50 rounded-lg text-center">
                             <p className="text-gray-600 flex items-center justify-center">
                                 <FaUser className="w-4 h-4 mr-2" />
-                                <a href="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+                                <Link to="/dang-nhap" className="text-blue-600 hover:text-blue-700 font-medium mr-1 ">
                                     Đăng nhập
-                                </a>
-                                {" "}để bình luận
+                                </Link>
+                                {" "} để bình luận
                             </p>
                         </div>
                     )}

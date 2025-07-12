@@ -136,8 +136,15 @@ export default function Header() {
 
   useEffect(() => {
     const fetchDataCategories = async () => {
-      const response = await getAllCategories();
-      setDataCategories(response?.data);
+      if (localStorage.getItem("categories")) {
+        setDataCategories(JSON.parse(localStorage.getItem("categories")));
+      } else {
+        const response = await getAllCategories();
+        if (response?.data) {
+          setDataCategories(response?.data);
+          localStorage.setItem("categories", JSON.stringify(response?.data));
+        }
+      }
     };
     fetchDataCategories();
   }, []);
@@ -498,7 +505,7 @@ export default function Header() {
                                   {article.title}
                                 </p>
                                 <p className="text-blue-600 text-xs mt-1 font-medium">
-                                  {article.category?.name || "Tin tức"}
+                                  {article?.tags?.length > 0 ? article?.tags[0]?.name : ''}
                                 </p>
                               </div>
                             </a>
@@ -609,18 +616,20 @@ export default function Header() {
             </div>
           ) : (
             /* Login/Register Buttons - When not logged in */
-            <div className="hidden md:flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-3">
               <Link
                 to="/dang-nhap"
-                className="text-white hover:text-yellow-400 px-3 py-2 text-sm font-medium transition-all duration-300 focus:outline-2 focus:outline-yellow-400 focus:outline-offset-2"
+                className="relative text-white hover:text-yellow-400 px-4 py-2 text-sm font-medium transition-all duration-300 focus:outline-2 focus:outline-yellow-400 focus:outline-offset-2 group"
               >
-                Đăng nhập
+                <span className="relative z-10">Đăng nhập</span>
+                <div className="absolute inset-0 border border-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </Link>
               <Link
                 to="/dang-ky"
-                className="bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 focus:outline-2 focus:outline-yellow-400 focus:outline-offset-2"
+                className="relative bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-500 hover:from-yellow-500 hover:via-orange-500 hover:to-yellow-600 text-blue-900 px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 focus:outline-2 focus:outline-yellow-400 focus:outline-offset-2 shadow-lg hover:shadow-xl transform hover:scale-105 group overflow-hidden"
               >
-                Đăng ký
+                <span className="relative z-10">Đăng ký</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-white/20 via-white/30 to-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12"></div>
               </Link>
             </div>
           )}
@@ -714,7 +723,7 @@ export default function Header() {
                                   {article.title}
                                 </p>
                                 <p className="text-blue-600 text-xs mt-1 font-medium">
-                                  {article.category?.name || "Tin tức"}
+                                  {article?.tags?.length > 0 ? article?.tags[0]?.name : ''}
                                 </p>
                               </div>
                             </a>
@@ -776,18 +785,30 @@ export default function Header() {
             </div>
           ) : (
             <div className="mb-4 pb-4 border-b border-white/20">
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
                 <Link
                   to="/dang-nhap"
-                  className="text-white hover:text-yellow-400 py-2 text-sm font-medium transition-all duration-300"
+                  className="relative text-white hover:text-yellow-400 py-2.5 px-4 text-sm font-medium transition-all duration-300 group rounded-lg"
                 >
-                  Đăng nhập
+                  <span className="relative z-10 flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                    </svg>
+                    Đăng nhập
+                  </span>
+                  <div className="absolute inset-0 border border-white/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </Link>
                 <Link
                   to="/dang-ky"
-                  className="bg-yellow-400 text-center hover:bg-yellow-500 text-blue-900 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 text-center"
+                  className="relative bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-500 hover:from-yellow-500 hover:via-orange-500 hover:to-yellow-600 text-blue-900 px-6 py-3 rounded-full text-sm font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 group overflow-hidden"
                 >
-                  Đăng ký
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Đăng ký miễn phí
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/20 via-white/30 to-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12"></div>
                 </Link>
               </div>
             </div>

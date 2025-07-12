@@ -259,16 +259,19 @@ export default function SearchResults() {
                                                 </a>
                                             </div>
 
-                                            <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                                                {article.content || "Không có mô tả"}
-                                            </p>
+                                            <div
+                                                className="text-gray-600 text-sm mb-3 line-clamp-2"
+                                                dangerouslySetInnerHTML={{
+                                                    __html: article.content || "Không có mô tả"
+                                                }}
+                                            />
 
                                             <div className="flex items-center gap-4 text-sm text-gray-500">
-                                                {article.category && (
+                                                {article.tags && article.tags.length > 0 && article.tags.map((tag) => (
                                                     <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                                                        {article.category.name}
+                                                        {tag.name}
                                                     </span>
-                                                )}
+                                                ))}
 
                                                 <div className="flex items-center gap-1">
                                                     <FaCalendarAlt className="w-3 h-3" />

@@ -1,5 +1,6 @@
 import axios from "axios";
 
+
 export const getAllArticles = async (limit = 10, offset = 0, sortBy = "id", order = "desc") => {
     try {
         const response = await axios.get("http://localhost:8080/api/v1/articles/all", {
@@ -15,6 +16,16 @@ export const getAllArticles = async (limit = 10, offset = 0, sortBy = "id", orde
         return error?.response?.data;
     }
 };
+
+export const getArticleBySlug = async (slug) => {
+    try {
+        const response = await axios.get(`http://localhost:8080/api/v1/articles/slug/${slug}`);
+        return response?.data;
+    } catch (error) {
+        return error?.response?.data;
+    }
+};
+
 
 export const searchArticles = async (query, limit = 10, offset = 0, sortBy = "createAt", order = "desc") => {
     try {
