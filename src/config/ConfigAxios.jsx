@@ -72,7 +72,7 @@ axiosInstance.interceptors.response.use(
 
           alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại");
 
-          document.location.href = "/signin";
+          document.location.href = "/dang-nhap";
           Cookies.remove("refreshToken");
           Cookies.remove("user");
         }

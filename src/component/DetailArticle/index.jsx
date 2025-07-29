@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { selectIsLogin, selectUser } from "../../redux/slice/useSlice";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import { getArticleBySlug } from "../../services/articles";
+import { getArticleBySlug, increaseView } from "../../services/articles";
 import { additionalLike, unLike } from "../../services/like";
 import { addBookmark, deleteBookmark } from "../../services/bookmark";
 import { getCommentByArticleId, addComment, deleteComment } from "../../services/comment";
@@ -83,7 +83,6 @@ export default function DetailArticle() {
     const isLogin = useSelector(selectIsLogin);
     const user = useSelector(selectUser);
 
-    console.log("Check user: ", user);
 
     // Helper function to format date with timezone +7
     const formatDate = (dateString) => {
@@ -101,6 +100,16 @@ export default function DetailArticle() {
             hour12: false
         });
     };
+
+
+    useEffect(() => {
+        const increaseViewArticle = async () => {
+            if (article) {
+                await increaseView(article?.id);
+            }
+        };
+        increaseViewArticle();
+    }, [article]);
 
     // Function to fetch related articles
     const fetchRelatedArticles = async (categoryId, articlesId) => {
