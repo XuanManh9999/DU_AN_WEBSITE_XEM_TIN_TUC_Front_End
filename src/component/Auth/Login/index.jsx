@@ -154,24 +154,24 @@ export default function Login() {
             <h1 className="text-4xl xl:text-5xl font-bold mb-6 leading-tight">
               Chào mừng đến với
               <br />
-              <span className="text-yellow-300">Tin Tức 24/7</span>
+              <span className="text-yellow-300">Công ty Cổ phần Cấp nước Tân Hòa</span>
             </h1>
             <p className="text-xl opacity-90 mb-8 leading-relaxed">
-              Cập nhật tin tức nhanh chóng, chính xác và đáng tin cậy từ khắp
-              nơi trên thế giới
+              Nước Sạch Cho Mọi Nhà - Cung cấp dịch vụ cấp nước chất lượng cao,
+              tin tức và thông báo mới nhất về hệ thống cấp nước
             </p>
             <div className="flex items-center justify-center space-x-8 text-sm">
               <div className="text-center">
-                <div className="text-2xl font-bold">1M+</div>
-                <div className="opacity-80">Người dùng</div>
+                <div className="text-2xl font-bold">50K+</div>
+                <div className="opacity-80">Khách hàng</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold">24/7</div>
-                <div className="opacity-80">Cập nhật</div>
+                <div className="opacity-80">Dịch vụ</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold">100%</div>
-                <div className="opacity-80">Miễn phí</div>
+                <div className="opacity-80">Nước sạch</div>
               </div>
             </div>
           </div>

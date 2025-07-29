@@ -1,5 +1,5 @@
 import axios from "axios";
-
+import axiosInstance from "../config/ConfigAxios";
 
 export const getAllArticles = async (limit = 10, offset = 0, sortBy = "id", order = "desc") => {
     try {
@@ -19,7 +19,7 @@ export const getAllArticles = async (limit = 10, offset = 0, sortBy = "id", orde
 
 export const getArticleBySlug = async (slug) => {
     try {
-        const response = await axios.get(`http://localhost:8080/api/v1/articles/slug/${slug}`);
+        const response = await axiosInstance.get(`http://localhost:8080/api/v1/articles/slug/${slug}`);
         return response?.data;
     } catch (error) {
         return error?.response?.data;
@@ -38,6 +38,15 @@ export const searchArticles = async (query, limit = 10, offset = 0, sortBy = "cr
                 order
             }
         });
+        return response?.data;
+    } catch (error) {
+        return error?.response?.data;
+    }
+};
+
+export const getArticleByCategoryIdLimit4 = async (categoryId) => {
+    try {
+        const response = await axios.get(`http://localhost:8080/api/v1/articles/by-category/${categoryId}`);
         return response?.data;
     } catch (error) {
         return error?.response?.data;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Pagination from "../Pagination";
 import { searchArticles } from "../../services/articles";
 import { FaSearch, FaNewspaper, FaCalendarAlt, FaEye } from "react-icons/fa";
@@ -241,7 +241,7 @@ export default function SearchResults() {
                                     >
                                         <div className="flex-shrink-0">
                                             <img
-                                                src={article.thumbnail || "https://picsum.photos/200/150?random=" + article.id}
+                                                src={article?.thumbnail || ""}
                                                 alt={article.title}
                                                 className="w-32 h-24 object-cover rounded-lg"
                                                 onError={handleImageError}
@@ -249,14 +249,14 @@ export default function SearchResults() {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-start justify-between mb-2">
-                                                <a
-                                                    href={`/tin-tuc/${article.slug || article.id}`}
+                                                <Link
+                                                    to={`/${article.slugCategory}/${article.slug || article.id}`}
                                                     className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors block"
                                                 >
                                                     <div className="line-clamp-2">
                                                         {article.title}
                                                     </div>
-                                                </a>
+                                                </Link>
                                             </div>
 
                                             <div

@@ -5,8 +5,12 @@ import { selectIsLogin, selectUser } from "../../redux/slice/useSlice";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { getArticleBySlug } from "../../services/articles";
+import { additionalLike, unLike } from "../../services/like";
+import { addBookmark, deleteBookmark } from "../../services/bookmark";
+import { getCommentByArticleId, addComment, deleteComment } from "../../services/comment";
 import { showToast } from "../../utils/toast";
 import { capitalizeWords, formatDate } from "../../helper/format";
+import { getPostWithCategoryAndArticle } from "../../services/category";
 import {
     FaEye,
     FaHeart,
@@ -20,21 +24,45 @@ import {
     FaReply,
     FaSpinner,
     FaPaperPlane,
-    FaUser
+    FaUser,
+    FaTimes,
+    FaFacebook,
+    FaTwitter,
+    FaLinkedin,
+    FaWhatsapp,
+    FaTelegram,
+    FaCopy,
+    FaLink
 } from 'react-icons/fa';
 
-// Cấu hình ReactQuill
+// Cấu hình ReactQuill nâng cao
 const quillModules = {
     toolbar: [
-        ['bold', 'italic', 'underline'],
-        ['link'],
-        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+        [{ 'header': [1, 2, 3, false] }],
+        [{ 'size': ['small', false, 'large', 'huge'] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'color': [] }, { 'background': [] }],
+        [{ 'script': 'sub' }, { 'script': 'super' }],
+        ['blockquote', 'code-block'],
+        [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+        [{ 'align': [] }],
+        ['link', 'image'],
         ['clean']
     ],
+    clipboard: {
+        matchVisual: false,
+    }
 };
 
 const quillFormats = [
-    'bold', 'italic', 'underline', 'link', 'list', 'bullet'
+    'header', 'size',
+    'bold', 'italic', 'underline', 'strike',
+    'color', 'background',
+    'script',
+    'blockquote', 'code-block',
+    'list', 'bullet', 'indent',
+    'align',
+    'link', 'image'
 ];
 
 export default function DetailArticle() {
@@ -49,8 +77,13 @@ export default function DetailArticle() {
     const [replyingTo, setReplyingTo] = useState(null);
     const [replyContent, setReplyContent] = useState("");
     const [commentLikes, setCommentLikes] = useState({});
+    const [relatedArticles, setRelatedArticles] = useState([]);
+    const [showShareModal, setShowShareModal] = useState(false);
+
     const isLogin = useSelector(selectIsLogin);
     const user = useSelector(selectUser);
+
+    console.log("Check user: ", user);
 
     // Helper function to format date with timezone +7
     const formatDate = (dateString) => {
@@ -69,96 +102,126 @@ export default function DetailArticle() {
         });
     };
 
-    // Mock comments data (keep for now since no API yet)
-    const mockComments = [
-        {
-            id: 1,
-            user: {
-                name: "Trần Thị Hoa",
-                avatar: "https://picsum.photos/50/50?random=user1"
-            },
-            content: "Bài viết rất hay và bổ ích. Cảm ơn tác giả đã chia sẻ thông tin quý báu này!",
-            htmlContent: "<p>Bài viết rất hay và bổ ích. Cảm ơn tác giả đã chia sẻ thông tin quý báu này!</p>",
-            createdAt: "2024-07-04T14:30:00Z",
-            likes: 5,
-            replies: [
-                {
-                    id: 11,
-                    user: {
-                        name: "Nguyễn Văn An",
-                        avatar: "https://picsum.photos/50/50?random=author1"
-                    },
-                    content: "Cảm ơn bạn đã đọc và ủng hộ. Mình sẽ tiếp tục chia sẻ những thông tin hữu ích khác!",
-                    htmlContent: "<p>Cảm ơn bạn đã đọc và ủng hộ. Mình sẽ tiếp tục chia sẻ những thông tin hữu ích khác!</p>",
-                    createdAt: "2024-07-04T14:45:00Z",
-                    likes: 2,
-                    parentId: 1
-                }
-            ]
-        },
-        {
-            id: 2,
-            user: {
-                name: "Lê Minh Hoàng",
-                avatar: "https://picsum.photos/50/50?random=user2"
-            },
-            content: "Thông tin rất cập nhật và thiết thực. Hy vọng sẽ có thêm nhiều bài viết chuyên sâu như thế này.",
-            htmlContent: "<p>Thông tin rất cập nhật và thiết thực. Hy vọng sẽ có thêm nhiều bài viết <strong>chuyên sâu</strong> như thế này.</p>",
-            createdAt: "2024-07-04T15:45:00Z",
-            likes: 3,
-            replies: []
-        },
-        {
-            id: 3,
-            user: {
-                name: "Phạm Thị Lan",
-                avatar: "https://picsum.photos/50/50?random=user3"
-            },
-            content: "Các giải pháp công nghệ thực sự ấn tượng. Mong muốn được áp dụng trong thực tế sớm nhất có thể.",
-            htmlContent: "<p>Các giải pháp công nghệ thực sự ấn tượng. Mong muốn được áp dụng trong thực tế <em>sớm nhất có thể</em>.</p>",
-            createdAt: "2024-07-04T16:20:00Z",
-            likes: 7,
-            replies: [
-                {
-                    id: 31,
-                    user: {
-                        name: "Trần Văn Đức",
-                        avatar: "https://picsum.photos/50/50?random=user4"
-                    },
-                    content: "Mình cũng mong chờ việc này. Đặc biệt là công nghệ AI trong xử lý nước.",
-                    htmlContent: "<p>Mình cũng mong chờ việc này. Đặc biệt là công nghệ <strong>AI</strong> trong xử lý nước.</p>",
-                    createdAt: "2024-07-04T16:35:00Z",
-                    likes: 1,
-                    parentId: 3
-                }
-            ]
+    // Function to fetch related articles
+    const fetchRelatedArticles = async (categoryId, articlesId) => {
+        try {
+            const response = await getPostWithCategoryAndArticle(categoryId, articlesId);
+            if (response && response.status === 200) {
+                setRelatedArticles(response.data);
+            } else {
+                setRelatedArticles([]);
+            }
+        } catch (error) {
+            console.error("Error fetching related articles:", error);
+            setRelatedArticles([]);
         }
-    ];
+    };
 
-    // Mock related articles (keep for now since no API yet)
-    const relatedArticles = [
-        {
-            id: 2,
-            title: "Công nghệ lọc nước tiên tiến nhất hiện nay",
-            image: "https://picsum.photos/300/200?random=related1",
-            publishedAt: "2024-07-03T10:00:00Z",
-            category: "Công nghệ"
-        },
-        {
-            id: 3,
-            title: "Hệ thống cấp nước thông minh cho thành phố",
-            image: "https://picsum.photos/300/200?random=related2",
-            publishedAt: "2024-07-02T10:00:00Z",
-            category: "Công nghệ"
-        },
-        {
-            id: 4,
-            title: "Quy trình xử lý nước thải công nghiệp mới nhất",
-            image: "https://picsum.photos/300/200?random=related3",
-            publishedAt: "2024-07-01T10:00:00Z",
-            category: "Môi trường"
+    // Hàm cập nhật metadata động cho từng bài viết
+    const updateMetaTags = (article) => {
+        if (!article) return;
+
+        // Cập nhật title
+        document.title = `${article.title} - Công ty Cổ phần Cấp nước Tân Hòa`;
+
+        // Cập nhật Open Graph tags
+        const ogTags = {
+            'og:title': article.title,
+            'og:description': article.description || article.content?.replace(/<[^>]*>/g, '').substring(0, 160) + '...',
+            'og:image': article.thumbnail || '/logo-news.svg',
+            'og:url': window.location.href,
+            'og:type': 'article',
+            'og:site_name': 'Công ty Cổ phần Cấp nước Tân Hòa',
+            'og:locale': 'vi_VN'
+        };
+
+        // Cập nhật Twitter tags
+        const twitterTags = {
+            'twitter:card': 'summary_large_image',
+            'twitter:title': article.title,
+            'twitter:description': article.description || article.content?.replace(/<[^>]*>/g, '').substring(0, 160) + '...',
+            'twitter:image': article.thumbnail || '/logo-news.svg',
+            'twitter:url': window.location.href
+        };
+
+        // Cập nhật meta tags
+        Object.entries(ogTags).forEach(([property, content]) => {
+            let meta = document.querySelector(`meta[property="${property}"]`);
+            if (!meta) {
+                meta = document.createElement('meta');
+                meta.setAttribute('property', property);
+                document.head.appendChild(meta);
+            }
+            meta.setAttribute('content', content);
+        });
+
+        Object.entries(twitterTags).forEach(([name, content]) => {
+            let meta = document.querySelector(`meta[name="${name}"]`);
+            if (!meta) {
+                meta = document.createElement('meta');
+                meta.setAttribute('name', name);
+                document.head.appendChild(meta);
+            }
+            meta.setAttribute('content', content);
+        });
+    };
+
+    // Hàm chia sẻ đến Facebook với cải thiện
+    const shareToFacebook = () => {
+        const url = encodeURIComponent(window.location.href);
+        const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+
+        // Mở popup với kích thước lớn hơn
+        const popup = window.open(shareUrl, '_blank', 'width=600,height=500,scrollbars=yes,resizable=yes');
+
+        // Focus vào popup
+        if (popup) {
+            popup.focus();
         }
-    ];
+    };
+
+    // Hàm chia sẻ đến Twitter/X với cải thiện
+    const shareToTwitter = () => {
+        const url = encodeURIComponent(window.location.href);
+        const text = encodeURIComponent(article?.title || '');
+        const shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${text}&hashtags=TanHoaWater,CapNuoc`;
+        window.open(shareUrl, '_blank', 'width=600,height=400');
+    };
+
+    // Hàm chia sẻ đến LinkedIn với cải thiện
+    const shareToLinkedIn = () => {
+        const url = encodeURIComponent(window.location.href);
+        const title = encodeURIComponent(article?.title || '');
+        const summary = encodeURIComponent(article?.description || '');
+        const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}&title=${title}&summary=${summary}`;
+        window.open(shareUrl, '_blank', 'width=600,height=500');
+    };
+
+    // Hàm chia sẻ đến WhatsApp
+    const shareToWhatsApp = () => {
+        const url = encodeURIComponent(window.location.href);
+        const text = encodeURIComponent(`${article?.title || ''} - ${window.location.href}`);
+        const shareUrl = `https://wa.me/?text=${text}`;
+        window.open(shareUrl, '_blank');
+    };
+
+    // Hàm chia sẻ đến Telegram
+    const shareToTelegram = () => {
+        const url = encodeURIComponent(window.location.href);
+        const text = encodeURIComponent(article?.title || '');
+        const shareUrl = `https://t.me/share/url?url=${url}&text=${text}`;
+        window.open(shareUrl, '_blank');
+    };
+
+    // Hàm copy link
+    const copyToClipboard = async () => {
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            showToast.success('Đã sao chép link vào clipboard!');
+        } catch (err) {
+            showToast.error('Không thể sao chép link');
+        }
+    };
 
     useEffect(() => {
         const fetchArticle = async () => {
@@ -166,22 +229,17 @@ export default function DetailArticle() {
                 setIsLoading(true);
                 const response = await getArticleBySlug(slug);
                 if (response && response.status === 200) {
-                    setArticle(response?.data);
-                    setLikeCount(response?.data?.quantityLike || 0);
+                    const articleData = response?.data;
+                    setArticle(articleData);
+                    setLikeCount(articleData?.quantityLike || 0);
+                    setIsLiked(articleData?.like || false);
+                    setIsSaved(articleData?.bookmark || false);
 
-                    // Simulate loading comments (keep mock data for now)
-                    setTimeout(() => {
-                        setComments(mockComments);
-                        // Initialize comment likes
-                        const likes = {};
-                        mockComments.forEach(comment => {
-                            likes[comment.id] = comment.likes;
-                            comment.replies?.forEach(reply => {
-                                likes[reply.id] = reply.likes;
-                            });
-                        });
-                        setCommentLikes(likes);
-                    }, 500);
+                    // Cập nhật metadata cho bài viết
+                    updateMetaTags(articleData);
+
+                    await fetchComments(slug);
+                    await fetchRelatedArticles(articleData?.category?.id, articleData?.id);
                 } else {
                     showToast.error("Không tìm thấy bài viết hoặc đã xảy ra lỗi");
                 }
@@ -195,29 +253,128 @@ export default function DetailArticle() {
         fetchArticle();
     }, [slug]);
 
+    // Function to fetch comments
+    const fetchComments = async (articleSlug) => {
+        try {
+            const response = await getCommentByArticleId(articleSlug);
+            if (response && response.status === 200) {
+                // Map API response to component format
+                const mappedComments = response.data.map(comment => ({
+                    id: comment.id,
+                    user: {
+                        name: comment.username || "User",
+                        avatar: comment.avatar || "https://picsum.photos/50/50?random=user"
+                    },
+                    username: comment.username, // Thêm username để kiểm tra quyền xóa
+                    content: comment.content,
+                    htmlContent: comment.content,
+                    createdAt: comment.createdAt, // API mới dùng createdAt
+                    likes: 0, // API chưa có likes cho comment
+                    replies: comment.replies?.map(reply => ({
+                        id: reply.id,
+                        user: {
+                            name: reply.username || "User",
+                            avatar: reply.avatar || "https://picsum.photos/50/50?random=user"
+                        },
+                        username: reply.username, // Thêm username để kiểm tra quyền xóa
+                        content: reply.content,
+                        htmlContent: reply.content,
+                        createdAt: reply.createdAt, // API mới dùng createdAt
+                        likes: 0,
+                        parentId: comment.id
+                    })) || []
+                }));
+
+                setComments(mappedComments);
+
+                // Initialize comment likes
+                const likes = {};
+                mappedComments.forEach(comment => {
+                    likes[comment.id] = comment.likes;
+                    comment.replies?.forEach(reply => {
+                        likes[reply.id] = reply.likes;
+                    });
+                });
+                setCommentLikes(likes);
+            } else {
+                // Fallback to mock comments if API fails
+                setComments([]);
+            }
+        } catch (error) {
+            console.error("Error fetching comments:", error);
+            setComments([]);
+        }
+    };
 
 
-    const handleLike = () => {
+
+    const handleLike = async () => {
         if (!isLogin) {
             showToast.error("Vui lòng đăng nhập để thích bài viết!");
             return;
         }
 
-        setIsLiked(!isLiked);
-        setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+        try {
+            if (isLiked) {
+                // Unlike
+                const response = await unLike(user.id, article.id);
+                if (response && response.status === 200) {
+                    setIsLiked(false);
+                    setLikeCount(prev => prev - 1);
+                    showToast.success("Đã bỏ thích bài viết");
+                } else {
+                    showToast.error("Có lỗi xảy ra khi bỏ thích bài viết");
+                }
+            } else {
+                // Like
+                const response = await additionalLike(user.id, article.id);
+                if (response && response.status === 200) {
+                    setIsLiked(true);
+                    setLikeCount(prev => prev + 1);
+                    showToast.success("Đã thích bài viết");
+                } else {
+                    showToast.error("Có lỗi xảy ra khi thích bài viết");
+                }
+            }
+        } catch (error) {
+            console.error("Error handling like:", error);
+            showToast.error("Có lỗi xảy ra, vui lòng thử lại");
+        }
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!isLogin) {
             showToast.error("Vui lòng đăng nhập để lưu bài viết!");
             return;
         }
 
-        setIsSaved(!isSaved);
-        // Here you would typically call API to save/unsave article
+        try {
+            if (isSaved) {
+                // Remove bookmark
+                const response = await deleteBookmark(user.id, article.id);
+                if (response && response.status === 200) {
+                    setIsSaved(false);
+                    showToast.success("Đã bỏ lưu bài viết");
+                } else {
+                    showToast.error("Có lỗi xảy ra khi bỏ lưu bài viết");
+                }
+            } else {
+                // Add bookmark
+                const response = await addBookmark(user.id, article.id);
+                if (response && response.status === 200) {
+                    setIsSaved(true);
+                    showToast.success("Đã lưu bài viết");
+                } else {
+                    showToast.error("Có lỗi xảy ra khi lưu bài viết");
+                }
+            }
+        } catch (error) {
+            console.error("Error handling bookmark:", error);
+            showToast.error("Có lỗi xảy ra, vui lòng thử lại");
+        }
     };
 
-    const handleComment = (e) => {
+    const handleComment = async (e) => {
         e.preventDefault();
         if (!isLogin) {
             showToast.error("Vui lòng đăng nhập để bình luận!");
@@ -225,60 +382,49 @@ export default function DetailArticle() {
         }
 
         if (newComment.trim()) {
-            const comment = {
-                id: Date.now(),
-                user: {
-                    name: user?.username || "Anonymous",
-                    avatar: user?.avatar || "https://picsum.photos/50/50?random=currentuser"
-                },
-                content: newComment.replace(/<[^>]*>/g, ''), // Remove HTML tags for plain text
-                htmlContent: newComment,
-                createdAt: new Date().toISOString(),
-                likes: 0,
-                replies: []
-            };
+            try {
+                // Call API to add comment
+                const response = await addComment(null, article.id, newComment);
 
-            setComments([comment, ...comments]);
-            setCommentLikes(prev => ({ ...prev, [comment.id]: 0 }));
-            setNewComment("");
+                if (response && response.status === 201) {
+                    showToast.success("Đã thêm bình luận thành công");
+                    setNewComment("");
+                    // Reload comments to get the latest data
+                    await fetchComments(slug);
+                } else {
+                    showToast.error("Có lỗi xảy ra khi thêm bình luận");
+                }
+            } catch (error) {
+                console.error("Error adding comment:", error);
+                showToast.error("Có lỗi xảy ra, vui lòng thử lại");
+            }
         }
     };
 
-    const handleReply = (commentId) => {
+    const handleReply = async (commentId) => {
         if (!isLogin) {
             showToast.error("Vui lòng đăng nhập để phản hồi!");
             return;
         }
 
         if (replyContent.trim()) {
-            const reply = {
-                id: Date.now(),
-                user: {
-                    name: user?.username || "Anonymous",
-                    avatar: user?.avatar || "https://picsum.photos/50/50?random=currentuser"
-                },
-                content: replyContent.replace(/<[^>]*>/g, ''), // Remove HTML tags for plain text
-                htmlContent: replyContent,
-                createdAt: new Date().toISOString(),
-                likes: 0,
-                parentId: commentId
-            };
+            try {
+                // Call API to add reply comment
+                const response = await addComment(commentId, article.id, replyContent);
 
-            setComments(prevComments => {
-                return prevComments.map(comment => {
-                    if (comment.id === commentId) {
-                        return {
-                            ...comment,
-                            replies: [...(comment.replies || []), reply]
-                        };
-                    }
-                    return comment;
-                });
-            });
-
-            setCommentLikes(prev => ({ ...prev, [reply.id]: 0 }));
-            setReplyContent("");
-            setReplyingTo(null);
+                if (response && response.status === 201) {
+                    showToast.success("Đã thêm phản hồi thành công");
+                    setReplyContent("");
+                    setReplyingTo(null);
+                    // Reload comments to get the latest data
+                    await fetchComments(slug);
+                } else {
+                    showToast.error("Có lỗi xảy ra khi thêm phản hồi");
+                }
+            } catch (error) {
+                console.error("Error adding reply:", error);
+                showToast.error("Có lỗi xảy ra, vui lòng thử lại");
+            }
         }
     };
 
@@ -292,6 +438,36 @@ export default function DetailArticle() {
             ...prev,
             [commentId]: (prev[commentId] || 0) + 1
         }));
+    };
+
+    // Function to delete comment
+    const handleDeleteComment = async (commentId) => {
+        if (!isLogin) {
+            showToast.error("Vui lòng đăng nhập để xóa bình luận!");
+            return;
+        }
+
+        if (window.confirm("Bạn có chắc chắn muốn xóa bình luận này?")) {
+            try {
+                const response = await deleteComment(commentId);
+
+                if (response && response.status === 200) {
+                    showToast.success("Đã xóa bình luận thành công");
+                    // Reload comments to get the latest data
+                    await fetchComments(slug);
+                } else {
+                    showToast.error("Có lỗi xảy ra khi xóa bình luận");
+                }
+            } catch (error) {
+                console.error("Error deleting comment:", error);
+                showToast.error("Có lỗi xảy ra, vui lòng thử lại");
+            }
+        }
+    };
+
+    // Check if current user can delete comment
+    const canDeleteComment = (commentUsername) => {
+        return isLogin && user?.username === commentUsername;
     };
 
     const handleImageError = (e) => {
@@ -453,8 +629,12 @@ export default function DetailArticle() {
                             </button>
                         </div>
 
+                        {/* Thay thế nút chia sẻ hiện tại */}
                         <div className="flex items-center space-x-4">
-                            <button className="flex items-center space-x-2 px-4 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors">
+                            <button
+                                onClick={() => setShowShareModal(true)}
+                                className="flex items-center space-x-2 px-4 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+                            >
                                 <FaShare className="w-5 h-5" />
                                 <span>Chia sẻ</span>
                             </button>
@@ -515,7 +695,7 @@ export default function DetailArticle() {
 
                     {/* Comments List */}
                     <div className="space-y-6">
-                        {comments.map((comment) => (
+                        {comments.length > 0 ? comments.map((comment) => (
                             <div key={comment.id} className="space-y-4">
                                 {/* Main Comment */}
                                 <div className="flex space-x-4">
@@ -540,20 +720,21 @@ export default function DetailArticle() {
                                         </div>
                                         <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
                                             <button
-                                                onClick={() => handleCommentLike(comment.id)}
-                                                className="hover:text-blue-600 flex items-center space-x-1 transition-colors"
-                                            >
-                                                <FaThumbsUp className="w-4 h-4" />
-                                                <span>Thích</span>
-                                                <span>({commentLikes[comment.id] || comment.likes})</span>
-                                            </button>
-                                            <button
                                                 onClick={() => setReplyingTo(comment.id)}
                                                 className="hover:text-blue-600 flex items-center space-x-1 transition-colors"
                                             >
                                                 <FaReply className="w-4 h-4" />
                                                 <span>Trả lời</span>
                                             </button>
+                                            {canDeleteComment(comment.username) && (
+                                                <button
+                                                    onClick={() => handleDeleteComment(comment.id)}
+                                                    className="hover:text-red-600 flex items-center space-x-1 transition-colors"
+                                                >
+                                                    <FaTimes className="w-4 h-4" />
+                                                    <span>Xóa</span>
+                                                </button>
+                                            )}
                                         </div>
 
                                         {/* Reply Form */}
@@ -604,7 +785,7 @@ export default function DetailArticle() {
                                         {comment.replies.map((reply) => (
                                             <div key={reply.id} className="flex space-x-4">
                                                 <img
-                                                    src={reply.user.avatar}
+                                                    src={reply.user.avatar || ""}
                                                     alt={reply.user.name}
                                                     className="w-8 h-8 rounded-full flex-shrink-0"
                                                     onError={handleImageError}
@@ -631,6 +812,15 @@ export default function DetailArticle() {
                                                             <span>Thích</span>
                                                             <span>({commentLikes[reply.id] || reply.likes})</span>
                                                         </button>
+                                                        {canDeleteComment(reply.username) && (
+                                                            <button
+                                                                onClick={() => handleDeleteComment(reply.id)}
+                                                                className="hover:text-red-600 flex items-center space-x-1 transition-colors"
+                                                            >
+                                                                <FaTimes className="w-3 h-3" />
+                                                                <span>Xóa</span>
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -638,7 +828,11 @@ export default function DetailArticle() {
                                     </div>
                                 )}
                             </div>
-                        ))}
+                        )) : (
+                            <div className="text-center text-gray-500">
+                                <p>Bạn cần đăng nhập để xem bình luận</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -646,30 +840,137 @@ export default function DetailArticle() {
                 <div className="bg-white rounded-lg shadow-lg p-6">
                     <h3 className="text-xl font-bold text-gray-900 mb-6">Bài viết liên quan</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {relatedArticles.map((article) => (
-                            <div key={article.id} className="group cursor-pointer">
+                        {relatedArticles.length > 0 ? relatedArticles.map((article) => (
+                            <Link key={article.id} to={`/${article.slugCategory}/${article.slug}`} className="group cursor-pointer">
                                 <img
-                                    src={article.image}
+                                    src={article.thumbnail || ""}
                                     alt={article.title}
                                     className="w-full h-48 object-cover rounded-lg mb-4 group-hover:opacity-75 transition-opacity"
                                     onError={handleImageError}
                                 />
                                 <div className="space-y-2">
                                     <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
-                                        {article.category}
+                                        {article.category?.name || "Tin tức"}
                                     </span>
                                     <h4 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
                                         {article.title}
                                     </h4>
+                                    <div className="flex items-center justify-between text-sm text-gray-500">
+                                        <div className="flex items-center space-x-2">
+                                            <span>Bởi {article.author?.username || "Admin"}</span>
+                                        </div>
+                                        <div className="flex items-center space-x-1">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                            <span>{article.view?.toLocaleString() || 0}</span>
+                                        </div>
+                                    </div>
                                     <p className="text-sm text-gray-500">
-                                        {formatDate(article.publishedAt)}
+                                        {formatDate(article.createAt)}
                                     </p>
                                 </div>
+                            </Link>
+                        )) : (
+                            <div className="col-span-full text-center text-gray-500 py-8">
+                                <p>Không có bài viết liên quan</p>
                             </div>
-                        ))}
+                        )}
                     </div>
                 </div>
             </div>
+
+            {/* Modal chia sẻ */}
+            {showShareModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900">Chia sẻ bài viết</h3>
+                            <button
+                                onClick={() => setShowShareModal(false)}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <FaTimes className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Preview của bài viết */}
+                        {article && (
+                            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                                <h4 className="font-semibold text-gray-900 text-sm mb-1">{article.title}</h4>
+                                {article.description && (
+                                    <p className="text-gray-600 text-xs mb-2">{article.description}</p>
+                                )}
+                                {article.thumbnail && (
+                                    <img
+                                        src={article.thumbnail}
+                                        alt={article.title}
+                                        className="w-full h-20 object-cover rounded"
+                                    />
+                                )}
+                            </div>
+                        )}
+
+                        <div className="space-y-3">
+                            <button
+                                onClick={shareToFacebook}
+                                className="w-full flex items-center space-x-3 p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                                <FaFacebook className="w-5 h-5" />
+                                <span>Chia sẻ trên Facebook</span>
+                            </button>
+
+                            <button
+                                onClick={shareToTwitter}
+                                className="w-full flex items-center space-x-3 p-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+                            >
+                                <FaTwitter className="w-5 h-5" />
+                                <span>Chia sẻ trên Twitter/X</span>
+                            </button>
+
+                            <button
+                                onClick={shareToLinkedIn}
+                                className="w-full flex items-center space-x-3 p-3 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors"
+                            >
+                                <FaLinkedin className="w-5 h-5" />
+                                <span>Chia sẻ trên LinkedIn</span>
+                            </button>
+
+                            <button
+                                onClick={shareToWhatsApp}
+                                className="w-full flex items-center space-x-3 p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                            >
+                                <FaWhatsapp className="w-5 h-5" />
+                                <span>Chia sẻ qua WhatsApp</span>
+                            </button>
+
+                            <button
+                                onClick={shareToTelegram}
+                                className="w-full flex items-center space-x-3 p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                            >
+                                <FaTelegram className="w-5 h-5" />
+                                <span>Chia sẻ qua Telegram</span>
+                            </button>
+
+                            <button
+                                onClick={copyToClipboard}
+                                className="w-full flex items-center space-x-3 p-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                            >
+                                <FaCopy className="w-5 h-5" />
+                                <span>Sao chép link</span>
+                            </button>
+                        </div>
+
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                            <div className="flex items-center space-x-2">
+                                <FaLink className="w-4 h-4 text-gray-400" />
+                                <p className="text-sm text-gray-600 break-all">{window.location.href}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 } 

@@ -8,26 +8,33 @@ export default function Footer() {
           {/* Logo & Description */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center mb-4">
-              <img src="/logo-news.svg" alt="News Logo" className="h-10 w-auto mr-3" />
-              <span className="text-xl font-bold">News 24H</span>
+              <img
+                src="/logo-news.svg"
+                alt="Logo Tân Hòa"
+                className="h-12 w-auto mr-3 rounded"
+              />
+              <div>
+                <div className="text-lg font-bold text-blue-400">CÔNG TY CỔ PHẦN CẤP NƯỚC TÂN HÒA</div>
+                <div className="text-sm text-red-400">Nước Sạch Cho Mọi Nhà</div>
+              </div>
             </div>
             <p className="text-gray-300 leading-relaxed mb-4">
-              Trang tin tức hàng đầu Việt Nam - Cập nhật tin tức nhanh nhất, chính xác nhất từ trong nước và thế giới.
+              Công ty Cổ phần Cấp nước Tân Hòa - Đơn vị cung cấp nước sạch hàng đầu. Chúng tôi cam kết mang đến dịch vụ cấp nước an toàn, liên tục và chất lượng cho cộng đồng.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-300 hover:text-white transition-colors duration-300">
+              <a href="https://www.facebook.com/tanhoawater" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white transition-colors duration-300">
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+                  <path d="M22.675 0h-21.35C.595 0 0 .592 0 1.326v21.348C0 23.408.595 24 1.325 24h11.495v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.797.143v3.24l-1.918.001c-1.504 0-1.797.715-1.797 1.763v2.313h3.587l-.467 3.622h-3.12V24h6.116C23.406 24 24 23.408 24 22.674V1.326C24 .592 23.406 0 22.675 0" />
                 </svg>
               </a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors duration-300">
+              <a href="https://www.youtube.com/@tanhoawater" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white transition-colors duration-300">
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z" />
+                  <path d="M23.498 6.186a2.994 2.994 0 0 0-2.107-2.117C19.425 3.5 12 3.5 12 3.5s-7.425 0-9.391.569A2.994 2.994 0 0 0 .502 6.186C0 8.153 0 12 0 12s0 3.847.502 5.814a2.994 2.994 0 0 0 2.107 2.117C4.575 20.5 12 20.5 12 20.5s7.425 0 9.391-.569a2.994 2.994 0 0 0 2.107-2.117C24 15.847 24 12 24 12s0-3.847-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
                 </svg>
               </a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors duration-300">
+              <a href="mailto:info@tanhoawater.com" className="text-gray-300 hover:text-white transition-colors duration-300">
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.347-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.402.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.125-2.6 7.462-6.233 7.462-1.214 0-2.357-.629-2.749-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24.009 12.017 24.009c6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641.001.012.017 0z" />
+                  <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 2v.01L12 13 4 6.01V6h16zm-16 12V8.99l7.99 6.99c.39.34.99.34 1.38 0L20 8.99V18H4z" />
                 </svg>
               </a>
             </div>
@@ -38,10 +45,10 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">Danh mục</h3>
             <ul className="space-y-2">
               <li><a href="/tin-tuc" className="text-gray-300 hover:text-white transition-colors duration-300">Tin tức</a></li>
-              <li><a href="/the-thao" className="text-gray-300 hover:text-white transition-colors duration-300">Thể thao</a></li>
-              <li><a href="/cong-nghe" className="text-gray-300 hover:text-white transition-colors duration-300">Công nghệ</a></li>
-              <li><a href="/kinh-doanh" className="text-gray-300 hover:text-white transition-colors duration-300">Kinh doanh</a></li>
-              <li><a href="/giai-tri" className="text-gray-300 hover:text-white transition-colors duration-300">Giải trí</a></li>
+              <li><a href="/thong-bao" className="text-gray-300 hover:text-white transition-colors duration-300">Thông báo</a></li>
+              <li><a href="/dich-vu" className="text-gray-300 hover:text-white transition-colors duration-300">Dịch vụ</a></li>
+              <li><a href="/tra-cuu" className="text-gray-300 hover:text-white transition-colors duration-300">Tra cứu</a></li>
+              <li><a href="/lien-he" className="text-gray-300 hover:text-white transition-colors duration-300">Liên hệ</a></li>
             </ul>
           </div>
 
@@ -49,11 +56,21 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4">Hỗ trợ</h3>
             <ul className="space-y-2">
-              <li><a href="/lien-he" className="text-gray-300 hover:text-white transition-colors duration-300">Liên hệ</a></li>
-              <li><a href="/ve-chung-toi" className="text-gray-300 hover:text-white transition-colors duration-300">Về chúng tôi</a></li>
-              <li><a href="/chinh-sach" className="text-gray-300 hover:text-white transition-colors duration-300">Chính sách</a></li>
-              <li><a href="/dieu-khoan" className="text-gray-300 hover:text-white transition-colors duration-300">Điều khoản</a></li>
-              <li><a href="/sitemap" className="text-gray-300 hover:text-white transition-colors duration-300">Sitemap</a></li>
+              <li>
+                <span className="text-gray-300">Hotline: <a href="tel:1900123456" className="text-blue-400 hover:underline">1900.123.456</a></span>
+              </li>
+              <li>
+                <span className="text-gray-300">Email: <a href="mailto:info@tanhoawater.com" className="text-blue-400 hover:underline">info@tanhoawater.com</a></span>
+              </li>
+              <li>
+                <span className="text-gray-300">Địa chỉ: 123 Đường ABC, Quận XYZ, TP. HCM</span>
+              </li>
+              <li>
+                <a href="/chinh-sach" className="text-gray-300 hover:text-white transition-colors duration-300">Chính sách</a>
+              </li>
+              <li>
+                <a href="/dieu-khoan" className="text-gray-300 hover:text-white transition-colors duration-300">Điều khoản</a>
+              </li>
             </ul>
           </div>
         </div>
@@ -61,10 +78,10 @@ export default function Footer() {
         <div className="border-t border-gray-700 mt-8 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-300 text-sm">
-              © 2024 News 24H. Tất cả quyền được bảo lưu.
+              © {new Date().getFullYear()} Công ty Cổ phần Cấp nước Tân Hòa. Tất cả quyền được bảo lưu.
             </p>
             <p className="text-gray-300 text-sm mt-2 md:mt-0">
-              Thiết kế bởi <span className="text-blue-400">Your Team</span>
+              Thiết kế & phát triển bởi <span className="text-blue-400">Đội ngũ Tân Hòa</span>
             </p>
           </div>
         </div>

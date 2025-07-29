@@ -6,7 +6,7 @@ import { updatePassword, updateInfo } from '../../services/user';
 import { getCurrentUser } from '../../services/user';
 import { useDispatch } from 'react-redux';
 import { logout, setUser } from '../../redux/action/userAction';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 const AccountManagement = () => {
     const [activeTab, setActiveTab] = useState('profile');
     const [loading, setLoading] = useState(false);
@@ -241,12 +241,12 @@ const AccountManagement = () => {
                     <h3 className="text-xl font-medium text-gray-900 mb-2">Bạn cần đăng nhập</h3>
                     <p className="text-gray-500 mb-4">Vui lòng đăng nhập để quản lý tài khoản</p>
                     <div className="space-x-4">
-                        <a href="/login" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <Link to="/login" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                             Đăng nhập
-                        </a>
-                        <a href="/register" className="border border-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                        </Link>
+                        <Link to="/register" className="border border-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-50 transition-colors">
                             Đăng ký
-                        </a>
+                        </Link>
                     </div>
                 </div>
             </div>
@@ -259,7 +259,7 @@ const AccountManagement = () => {
             <div className="bg-white shadow-sm border-b">
                 <div className="max-w-4xl mx-auto px-4 py-6">
                     <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
-                        <a href="/" className="hover:text-blue-600 transition-colors">Trang chủ</a>
+                        <Link to="/" className="hover:text-blue-600 transition-colors">Trang chủ</Link>
                         <span>›</span>
                         <span className="text-gray-900 font-medium">Quản lý tài khoản</span>
                     </div>

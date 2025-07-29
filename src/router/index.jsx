@@ -37,7 +37,13 @@ const AppRoutes = () => {
   ];
 
   const element = useRoutes(routes);
-  return element;
+
+  return (
+    <>
+      <ScrollToTop />
+      {element}
+    </>
+  );
 };
 
 export default AppRoutes;

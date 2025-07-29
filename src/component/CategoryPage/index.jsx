@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { getPostByCategory } from '../../services/category';
 import Pagination from '../Pagination';
+import { Link } from 'react-router-dom';
 
 const CategoryPage = () => {
     const location = useLocation();
+    const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [articles, setArticles] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [loading, setLoading] = useState(true);
     const [category, setCategory] = useState('');
     const [subcategory, setSubcategory] = useState('');
-    const articlesPerPage = 9;
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalItems, setTotalItems] = useState(0);
+    const articlesPerPage = 10;
 
     // Parse category and subcategory from pathname
     useEffect(() => {
@@ -61,429 +67,56 @@ const CategoryPage = () => {
         }
     }, [location.pathname]);
 
-    // Mock data cho các bài viết theo danh mục
-    const mockArticles = {
-        'tin-tuc': [
-            {
-                id: 1,
-                title: "Cập nhật tình hình cấp nước trong mùa khô",
-                excerpt: "Tổng Công ty Cấp nước Sài Gòn đã có những giải pháp hiệu quả để đảm bảo việc cấp nước ổn định cho người dân trong mùa khô...",
-                image: "https://picsum.photos/400/250?random=1",
-                date: "2024-01-15",
-                author: "Nguyễn Văn A",
-                category: "Tin tức",
-                subcategory: "Mới nhất",
-                views: 1234,
-                slug: "cap-nhat-tinh-hinh-cap-nuoc-mua-kho"
-            },
-            {
-                id: 2,
-                title: "Triển khai hệ thống cấp nước thông minh tại TP.HCM",
-                excerpt: "Dự án hệ thống cấp nước thông minh được triển khai để tối ưu hóa việc quản lý và phân phối nước cho toàn thành phố...",
-                image: "https://picsum.photos/400/250?random=2",
-                date: "2024-01-14",
-                author: "Trần Thị B",
-                category: "Tin tức",
-                subcategory: "Tin nóng",
-                views: 2156,
-                slug: "trien-khai-he-thong-cap-nuoc-thong-minh"
-            },
-            {
-                id: 3,
-                title: "Chất lượng nước sinh hoạt được kiểm soát chặt chẽ",
-                excerpt: "Các chỉ số chất lượng nước được kiểm tra và báo cáo hàng ngày để đảm bảo sức khỏe người dân...",
-                image: "https://picsum.photos/400/250?random=3",
-                date: "2024-01-13",
-                author: "Lê Văn C",
-                category: "Tin tức",
-                subcategory: "Trong nước",
-                views: 1843,
-                slug: "chat-luong-nuoc-sinh-hoat-duoc-kiem-soat"
-            },
-            {
-                id: 4,
-                title: "Đầu tư nâng cấp hạ tầng cấp nước năm 2024",
-                excerpt: "Kế hoạch đầu tư 5000 tỷ đồng để nâng cấp hạ tầng cấp nước, đảm bảo nguồn nước chất lượng cao...",
-                image: "https://picsum.photos/400/250?random=4",
-                date: "2024-01-12",
-                author: "Phạm Thị D",
-                category: "Tin tức",
-                subcategory: "Mới nhất",
-                views: 2834,
-                slug: "dau-tu-nang-cap-ha-tang-cap-nuoc-2024"
-            },
-            {
-                id: 5,
-                title: "Kỹ thuật xử lý nước thải tiên tiến",
-                excerpt: "Áp dụng công nghệ mới trong xử lý nước thải để bảo vệ môi trường và tái sử dụng nước...",
-                image: "https://picsum.photos/400/250?random=5",
-                date: "2024-01-11",
-                author: "Hoàng Văn E",
-                category: "Tin tức",
-                subcategory: "Quốc tế",
-                views: 1567,
-                slug: "ky-thuat-xu-ly-nuoc-thai-tien-tien"
-            },
-            {
-                id: 6,
-                title: "Tiết kiệm nước trong sinh hoạt hàng ngày",
-                excerpt: "Hướng dẫn các cách tiết kiệm nước hiệu quả cho gia đình, góp phần bảo vệ nguồn nước...",
-                image: "https://picsum.photos/400/250?random=6",
-                date: "2024-01-10",
-                author: "Nguyễn Thị F",
-                category: "Tin tức",
-                subcategory: "Mới nhất",
-                views: 2145,
-                slug: "tiet-kiem-nuoc-trong-sinh-hoat-hang-ngay"
-            },
-            {
-                id: 7,
-                title: "Dự báo tình hình nguồn nước mùa khô 2024",
-                excerpt: "Các chuyên gia đưa ra dự báo về tình hình nguồn nước và các biện pháp ứng phó...",
-                image: "https://picsum.photos/400/250?random=7",
-                date: "2024-01-09",
-                author: "Trần Văn G",
-                category: "Tin tức",
-                subcategory: "Tin nóng",
-                views: 3245,
-                slug: "du-bao-tinh-hinh-nguon-nuoc-mua-kho-2024"
-            },
-            {
-                id: 8,
-                title: "Công nghệ lọc nước mới nhất từ Nhật Bản",
-                excerpt: "Hệ thống lọc nước tiên tiến giúp nâng cao chất lượng nước sinh hoạt...",
-                image: "https://picsum.photos/400/250?random=8",
-                date: "2024-01-08",
-                author: "Lê Thị H",
-                category: "Tin tức",
-                subcategory: "Quốc tế",
-                views: 1923,
-                slug: "cong-nghe-loc-nuoc-moi-nhat-tu-nhat-ban"
-            },
-            {
-                id: 9,
-                title: "Hệ thống cấp nước khẩn cấp trong mùa mưa",
-                excerpt: "Triển khai hệ thống cấp nước khẩn cấp để đảm bảo cung cấp nước liên tục...",
-                image: "https://picsum.photos/400/250?random=9",
-                date: "2024-01-07",
-                author: "Phạm Văn I",
-                category: "Tin tức",
-                subcategory: "Tin nóng",
-                views: 2756,
-                slug: "he-thong-cap-nuoc-khan-cap-mua-mua"
-            },
-            {
-                id: 10,
-                title: "Chương trình giáo dục bảo vệ nguồn nước",
-                excerpt: "Triển khai chương trình giáo dục về bảo vệ nguồn nước trong các trường học...",
-                image: "https://picsum.photos/400/250?random=10",
-                date: "2024-01-06",
-                author: "Nguyễn Văn J",
-                category: "Tin tức",
-                subcategory: "Mới nhất",
-                views: 1634,
-                slug: "chuong-trinh-giao-duc-bao-ve-nguon-nuoc"
-            },
-            {
-                id: 11,
-                title: "Kiểm tra chất lượng nước định kỳ",
-                excerpt: "Quy trình kiểm tra chất lượng nước được thực hiện định kỳ để đảm bảo an toàn...",
-                image: "https://picsum.photos/400/250?random=11",
-                date: "2024-01-05",
-                author: "Trần Thị K",
-                category: "Tin tức",
-                subcategory: "Trong nước",
-                views: 2456,
-                slug: "kiem-tra-chat-luong-nuoc-dinh-ky"
-            },
-            {
-                id: 12,
-                title: "Dự án nâng cấp trạm bơm nước",
-                excerpt: "Dự án nâng cấp các trạm bơm nước để tăng cường hiệu quả cấp nước...",
-                image: "https://picsum.photos/400/250?random=12",
-                date: "2024-01-04",
-                author: "Lê Văn L",
-                category: "Tin tức",
-                subcategory: "Mới nhất",
-                views: 1987,
-                slug: "du-an-nang-cap-tram-bom-nuoc"
-            },
-            {
-                id: 13,
-                title: "Hệ thống theo dõi chất lượng nước online",
-                excerpt: "Triển khai hệ thống theo dõi chất lượng nước trực tuyến 24/7 để đảm bảo an toàn...",
-                image: "https://picsum.photos/400/250?random=25",
-                date: "2024-01-03",
-                author: "Võ Thị M",
-                category: "Tin tức",
-                subcategory: "Trong nước",
-                views: 3421,
-                slug: "he-thong-theo-doi-chat-luong-nuoc-online"
-            },
-            {
-                id: 14,
-                title: "Đổi mới công nghệ xử lý nước thải công nghiệp",
-                excerpt: "Áp dụng công nghệ mới trong xử lý nước thải công nghiệp để giảm thiểu tác động môi trường...",
-                image: "https://picsum.photos/400/250?random=26",
-                date: "2024-01-02",
-                author: "Đỗ Văn N",
-                category: "Tin tức",
-                subcategory: "Quốc tế",
-                views: 2876,
-                slug: "doi-moi-cong-nghe-xu-ly-nuoc-thai-cong-nghiep"
-            },
-            {
-                id: 15,
-                title: "Kế hoạch cải thiện chất lượng nước năm 2024",
-                excerpt: "Phương án cải thiện chất lượng nước toàn diện với nhiều giải pháp hiện đại...",
-                image: "https://picsum.photos/400/250?random=27",
-                date: "2024-01-01",
-                author: "Nguyễn Thị O",
-                category: "Tin tức",
-                subcategory: "Mới nhất",
-                views: 3156,
-                slug: "ke-hoach-cai-thien-chat-luong-nuoc-2024"
+    // Get current page from URL params
+    useEffect(() => {
+        const page = parseInt(searchParams.get('page')) || 1;
+        setCurrentPage(page);
+    }, [searchParams]);
+
+    // Fetch articles from API
+    useEffect(() => {
+        const fetchArticles = async () => {
+            if (!category) return;
+
+            setLoading(true);
+            try {
+                const offset = (currentPage - 1) * articlesPerPage;
+                const response = await getPostByCategory(category, articlesPerPage, offset);
+
+                if (response.status === 200) {
+                    // Map API response to component state
+                    const mappedArticles = response.data.map(article => ({
+                        id: article.id,
+                        title: article.title,
+                        excerpt: article.content.replace(/<[^>]*>/g, '').substring(0, 150) + '...',
+                        image: article.thumbnail,
+                        date: new Date(article.createAt).toISOString().split('T')[0],
+                        author: article.author.username,
+                        category: article.category.name,
+                        subcategory: article.category.name,
+                        views: article.view,
+                        slug: article.slug,
+                        tags: article.tags || []
+                    }));
+
+
+                    setArticles(mappedArticles);
+                    setTotalPages(response.totalPages);
+                    setTotalItems(response.totalItems);
+                } else {
+                    console.error('Error fetching articles:', response.message);
+                    setArticles([]);
+                }
+            } catch (error) {
+                console.error('Error fetching articles:', error);
+                setArticles([]);
+            } finally {
+                setLoading(false);
             }
-        ],
-        'the-thao': [
-            {
-                id: 16,
-                title: "Giải bóng đá SAWACO Cup 2024",
-                excerpt: "Giải đấu bóng đá thường niên của các đội tuyển nhân viên SAWACO với nhiều trận cầu hấp dẫn...",
-                image: "https://picsum.photos/400/250?random=13",
-                date: "2024-01-15",
-                author: "Nguyễn Thể Thao",
-                category: "Thể thao",
-                subcategory: "Bóng đá",
-                views: 3456,
-                slug: "giai-bong-da-sawaco-cup-2024"
-            },
-            {
-                id: 17,
-                title: "Chương trình thể dục buổi sáng cho nhân viên",
-                excerpt: "Khuyến khích nhân viên tham gia các hoạt động thể dục thể thao để nâng cao sức khỏe...",
-                image: "https://picsum.photos/400/250?random=14",
-                date: "2024-01-14",
-                author: "Trần Thể Thao",
-                category: "Thể thao",
-                subcategory: "Khác",
-                views: 2134,
-                slug: "chuong-trinh-the-duc-buoi-sang-nhan-vien"
-            },
-            {
-                id: 18,
-                title: "Giải tennis nội bộ SAWACO",
-                excerpt: "Giải tennis nội bộ với sự tham gia của hơn 50 nhân viên từ các phòng ban...",
-                image: "https://picsum.photos/400/250?random=28",
-                date: "2024-01-13",
-                author: "Lê Thể Thao",
-                category: "Thể thao",
-                subcategory: "Tennis",
-                views: 1987,
-                slug: "giai-tennis-noi-bo-sawaco"
-            },
-            {
-                id: 19,
-                title: "Giải bóng rổ trẻ SAWACO League",
-                excerpt: "Giải bóng rổ dành cho con em cán bộ nhân viên tạo sân chơi lành mạnh...",
-                image: "https://picsum.photos/400/250?random=29",
-                date: "2024-01-12",
-                author: "Phan Thể Thao",
-                category: "Thể thao",
-                subcategory: "Bóng rổ",
-                views: 2756,
-                slug: "giai-bong-ro-tre-sawaco-league"
-            },
-            {
-                id: 20,
-                title: "Chương trình thể dục nhịp điệu cho nữ CBCNV",
-                excerpt: "Lớp học thể dục nhịp điệu giúp chị em nhân viên giữ gìn sức khỏe và vóc dáng...",
-                image: "https://picsum.photos/400/250?random=30",
-                date: "2024-01-11",
-                author: "Nguyễn Thể Thao",
-                category: "Thể thao",
-                subcategory: "Khác",
-                views: 3245,
-                slug: "chuong-trinh-the-duc-nhip-dieu-nu-cbcnv"
-            }
-        ],
-        'cong-nghe': [
-            {
-                id: 21,
-                title: "Ứng dụng AI trong quản lý cấp nước",
-                excerpt: "Triển khai công nghệ trí tuệ nhân tạo để tối ưu hóa quy trình quản lý và phân phối nước...",
-                image: "https://picsum.photos/400/250?random=15",
-                date: "2024-01-15",
-                author: "Nguyễn Công Nghệ",
-                category: "Công nghệ",
-                subcategory: "AI & Tech",
-                views: 4567,
-                slug: "ung-dung-ai-trong-quan-ly-cap-nuoc"
-            },
-            {
-                id: 22,
-                title: "Hệ thống IoT giám sát chất lượng nước",
-                excerpt: "Mạng lưới cảm biến IoT giúp theo dõi chất lượng nước trong thời gian thực...",
-                image: "https://picsum.photos/400/250?random=16",
-                date: "2024-01-14",
-                author: "Trần Công Nghệ",
-                category: "Công nghệ",
-                subcategory: "AI & Tech",
-                views: 3245,
-                slug: "he-thong-iot-giam-sat-chat-luong-nuoc"
-            },
-            {
-                id: 23,
-                title: "Ứng dụng mobile quản lý cấp nước",
-                excerpt: "Phát triển ứng dụng di động giúp khách hàng quản lý việc sử dụng nước một cách tiện lợi...",
-                image: "https://picsum.photos/400/250?random=31",
-                date: "2024-01-13",
-                author: "Lê Công Nghệ",
-                category: "Công nghệ",
-                subcategory: "Điện thoại",
-                views: 2845,
-                slug: "ung-dung-mobile-quan-ly-cap-nuoc"
-            },
-            {
-                id: 24,
-                title: "Hệ thống máy tính tại trung tâm điều hành",
-                excerpt: "Nâng cấp hệ thống máy tính và phần mềm quản lý tại trung tâm điều hành...",
-                image: "https://picsum.photos/400/250?random=32",
-                date: "2024-01-12",
-                author: "Phạm Công Nghệ",
-                category: "Công nghệ",
-                subcategory: "Laptop",
-                views: 2156,
-                slug: "he-thong-may-tinh-trung-tam-dieu-hanh"
-            }
-        ],
-        'kinh-doanh': [
-            {
-                id: 25,
-                title: "Kết quả kinh doanh Q4/2023 của SAWACO",
-                excerpt: "Báo cáo kết quả kinh doanh quý 4 năm 2023 với những thành tích đáng kể...",
-                image: "https://picsum.photos/400/250?random=17",
-                date: "2024-01-15",
-                author: "Nguyễn Kinh Doanh",
-                category: "Kinh doanh",
-                subcategory: "Chứng khoán",
-                views: 5678,
-                slug: "ket-qua-kinh-doanh-q4-2023-sawaco"
-            },
-            {
-                id: 26,
-                title: "Thương hiệu SAWACO trong lĩnh vực cấp nước",
-                excerpt: "Nỗ lực xây dựng thương hiệu SAWACO trong ngành cấp nước tại Việt Nam...",
-                image: "https://picsum.photos/400/250?random=33",
-                date: "2024-01-14",
-                author: "Trần Kinh Doanh",
-                category: "Kinh doanh",
-                subcategory: "Khởi nghiệp",
-                views: 3456,
-                slug: "thuong-hieu-sawaco-linh-vuc-cap-nuoc"
-            },
-            {
-                id: 27,
-                title: "Đầu tư dự án nhà máy nước mới",
-                excerpt: "Kế hoạch đầu tư xây dựng nhà máy nước mới với công suất 500.000 m3/ngày...",
-                image: "https://picsum.photos/400/250?random=34",
-                date: "2024-01-13",
-                author: "Lê Kinh Doanh",
-                category: "Kinh doanh",
-                subcategory: "Bất động sản",
-                views: 4234,
-                slug: "dau-tu-du-an-nha-may-nuoc-moi"
-            }
-        ],
-        'giai-tri': [
-            {
-                id: 28,
-                title: "Chương trình văn nghệ chào mừng năm mới",
-                excerpt: "Đêm văn nghệ với sự tham gia của các nghệ sĩ nổi tiếng để chào mừng năm mới...",
-                image: "https://picsum.photos/400/250?random=18",
-                date: "2024-01-15",
-                author: "Nguyễn Giải Trí",
-                category: "Giải trí",
-                subcategory: "Văn hóa",
-                views: 3456,
-                slug: "chuong-trinh-van-nghe-chao-mung-nam-moi"
-            },
-            {
-                id: 29,
-                title: "Liên hoan phim tài liệu về nước",
-                excerpt: "Tổ chức liên hoan phim tài liệu về tài nguyên nước và môi trường...",
-                image: "https://picsum.photos/400/250?random=35",
-                date: "2024-01-14",
-                author: "Trần Giải Trí",
-                category: "Giải trí",
-                subcategory: "Phim ảnh",
-                views: 2345,
-                slug: "lien-hoan-phim-tai-lieu-ve-nuoc"
-            },
-            {
-                id: 30,
-                title: "Cuộc thi ảnh đẹp về nước",
-                excerpt: "Cuộc thi chụp ảnh với chủ đề 'Nước trong cuộc sống' thu hút nhiều tác phẩm...",
-                image: "https://picsum.photos/400/250?random=36",
-                date: "2024-01-13",
-                author: "Lê Giải Trí",
-                category: "Giải trí",
-                subcategory: "Văn hóa",
-                views: 2867,
-                slug: "cuoc-thi-anh-dep-ve-nuoc"
-            }
-        ],
-        'doi-song': [
-            {
-                id: 31,
-                title: "Sử dụng nước sinh hoạt an toàn",
-                excerpt: "Hướng dẫn cách sử dụng nước sinh hoạt an toàn cho sức khỏe của cả gia đình...",
-                image: "https://picsum.photos/400/250?random=19",
-                date: "2024-01-15",
-                author: "Nguyễn Đời Sống",
-                category: "Đời sống",
-                subcategory: "Sức khỏe",
-                views: 2345,
-                slug: "su-dung-nuoc-sinh-hoat-an-toan"
-            },
-            {
-                id: 32,
-                title: "Tác dụng của nước đối với làn da",
-                excerpt: "Uống đủ nước mỗi ngày giúp da khỏe mạnh, tươi trẻ và căng bóng tự nhiên...",
-                image: "https://picsum.photos/400/250?random=37",
-                date: "2024-01-14",
-                author: "Trần Đời Sống",
-                category: "Đời sống",
-                subcategory: "Sức khỏe",
-                views: 3456,
-                slug: "tac-dung-cua-nuoc-doi-voi-lan-da"
-            },
-            {
-                id: 33,
-                title: "Nước và sức khỏe gia đình",
-                excerpt: "Tầm quan trọng của nước sạch đối với sức khỏe các thành viên trong gia đình...",
-                image: "https://picsum.photos/400/250?random=38",
-                date: "2024-01-13",
-                author: "Lê Đời Sống",
-                category: "Đời sống",
-                subcategory: "Gia đình",
-                views: 4567,
-                slug: "nuoc-va-suc-khoe-gia-dinh"
-            },
-            {
-                id: 34,
-                title: "Món ăn từ nước sạch an toàn",
-                excerpt: "Các món ăn chế biến từ nước sạch đảm bảo an toàn vệ sinh thực phẩm...",
-                image: "https://picsum.photos/400/250?random=39",
-                date: "2024-01-12",
-                author: "Phạm Đời Sống",
-                category: "Đời sống",
-                subcategory: "Ẩm thực",
-                views: 2345,
-                slug: "mon-an-tu-nuoc-sach-an-toan"
-            }
-        ]
-    };
+        };
+
+        fetchArticles();
+    }, [category, currentPage]);
 
     const categoryNames = {
         'tin-tuc': 'Tin tức',
@@ -521,32 +154,18 @@ const CategoryPage = () => {
         'du-lich': 'Du lịch'
     };
 
-    useEffect(() => {
-        if (!category) return;
-
-        setLoading(true);
-
-        // Simulate API call
-        setTimeout(() => {
-            let filteredArticles = mockArticles[category] || [];
-
-            if (subcategory) {
-                filteredArticles = filteredArticles.filter(article =>
-                    article.subcategory.toLowerCase().replace(/\s+/g, '-') === subcategory
-                );
-            }
-
-            setArticles(filteredArticles);
-            setLoading(false);
-        }, 500);
-    }, [category, subcategory]);
-
-    const totalPages = Math.ceil(articles.length / articlesPerPage);
-    const startIndex = (currentPage - 1) * articlesPerPage;
-    const currentArticles = articles.slice(startIndex, startIndex + articlesPerPage);
-
     const handlePageChange = (page) => {
         setCurrentPage(page);
+        // Update URL with page parameter
+        const newSearchParams = new URLSearchParams(searchParams);
+        if (page === 1) {
+            newSearchParams.delete('page');
+        } else {
+            newSearchParams.set('page', page.toString());
+        }
+
+        const newUrl = `${location.pathname}${newSearchParams.toString() ? `?${newSearchParams.toString()}` : ''}`;
+        navigate(newUrl);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -575,11 +194,11 @@ const CategoryPage = () => {
             <div className="bg-white shadow-sm border-b">
                 <div className="max-w-6xl mx-auto px-4 py-6">
                     <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
-                        <a href="/" className="hover:text-blue-600 transition-colors">Trang chủ</a>
+                        <Link to="/" className="hover:text-blue-600 transition-colors">Trang chủ</Link>
                         <span>›</span>
-                        <a href={`/${category}`} className="hover:text-blue-600 transition-colors">
+                        <Link to={`/${category}`} className="hover:text-blue-600 transition-colors">
                             {categoryNames[category]}
-                        </a>
+                        </Link>
                         {subcategory && (
                             <>
                                 <span>›</span>
@@ -591,7 +210,7 @@ const CategoryPage = () => {
                         {subcategory ? subcategoryNames[subcategory] : categoryNames[category]}
                     </h1>
                     <p className="text-gray-600 mt-2">
-                        {articles.length} bài viết được tìm thấy
+                        {totalItems} bài viết được tìm thấy
                     </p>
                 </div>
             </div>
@@ -612,9 +231,9 @@ const CategoryPage = () => {
                     <>
                         {/* Articles Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                            {currentArticles.map((article) => (
+                            {articles.map((article) => (
                                 <article key={article.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
-                                    <a href={`/tin-tuc/${article.slug}`} className="block">
+                                    <Link to={`/tin-tuc/${article.slug}`} className="block">
                                         <div className="aspect-w-16 aspect-h-9 rounded-t-lg overflow-hidden">
                                             <img
                                                 src={article.image}
@@ -623,24 +242,24 @@ const CategoryPage = () => {
                                                 onError={handleImageError}
                                             />
                                         </div>
-                                    </a>
+                                    </Link>
                                     <div className="p-4">
                                         <div className="flex items-center space-x-2 text-sm text-gray-500 mb-2">
                                             <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-                                                {article.subcategory}
+                                                {article.category}
                                             </span>
                                             <span>•</span>
                                             <span>{new Date(article.date).toLocaleDateString('vi-VN')}</span>
                                         </div>
                                         <h3 className="font-semibold text-gray-900 mb-2 hover:text-blue-600 transition-colors">
-                                            <a href={`/tin-tuc/${article.slug}`} className="no-underline" style={{
+                                            <Link to={`/tin-tuc/${article.slug}`} className="no-underline" style={{
                                                 display: '-webkit-box',
                                                 WebkitBoxOrient: 'vertical',
                                                 WebkitLineClamp: 2,
                                                 overflow: 'hidden'
                                             }}>
                                                 {article.title}
-                                            </a>
+                                            </Link>
                                         </h3>
                                         <p className="text-gray-600 text-sm mb-3" style={{
                                             display: '-webkit-box',
@@ -650,6 +269,20 @@ const CategoryPage = () => {
                                         }}>
                                             {article.excerpt}
                                         </p>
+                                        {/* Tags */}
+                                        {article.tags && article.tags.length > 0 && (
+                                            <div className="flex flex-wrap gap-1 mb-3">
+                                                {article.tags.map((tag) => (
+                                                    <span
+                                                        key={tag.id}
+                                                        className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium hover:bg-gray-200 transition-colors"
+                                                        title={tag.description}
+                                                    >
+                                                        #{tag.name}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
                                         <div className="flex items-center justify-between text-sm text-gray-500">
                                             <span>Bởi {article.author}</span>
                                             <div className="flex items-center space-x-1">

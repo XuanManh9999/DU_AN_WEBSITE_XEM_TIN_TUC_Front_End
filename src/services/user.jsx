@@ -42,3 +42,22 @@ export const updateInfo = async (avatar, username) => {
         return error?.response?.data;
     }
 }
+
+
+export const getAllBookMarkByUser = async () => {
+    try {
+        const response = await axiosInstance.get("/api/v1/bookmark/all-by-user");
+        return response?.data;
+    } catch (error) {
+        return error?.response?.data;
+    }
+}
+
+export const getAllLikeByUser = async () => {
+    try {
+        const response = await axiosInstance.get("/api/v1/like/all-like-by-user");
+        return response?.data;
+    } catch (error) {
+        return error?.response?.data;
+    }
+}
