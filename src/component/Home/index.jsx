@@ -653,7 +653,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Giới thiệu Website */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-6 text-white">
                 <h3 className="font-bold text-lg mb-2">Chào mừng bạn đến với Website Tin Tức Tổng Hợp</h3>

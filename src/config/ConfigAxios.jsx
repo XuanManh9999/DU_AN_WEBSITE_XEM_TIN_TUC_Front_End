@@ -45,16 +45,17 @@ axiosInstance.interceptors.response.use(
       Cookies.remove("accessToken");
 
       try {
-        const res = await axios.get(
-          "http://localhost:8080/api/v1/auth/access_token_by_refresh_token",
-          {
-            headers: {
-              Authorization: `Bearer ${refreshToken}`,
-            },
-          }
-        );
+        const res = await axios.post(
+        "http://localhost:8080/auth/refresh",
+        {},
+        {
+          headers: {
+            "x-token": refreshToken,
+          },
+        }
+      );
 
-        const newAccessToken = res.data?.access_token;
+        const newAccessToken = res.data?.accessToken;
         if (!newAccessToken) {
           throw new Error("Không nhận được access token mới");
         }
@@ -69,9 +70,7 @@ axiosInstance.interceptors.response.use(
       } catch (refreshErr) {
         if (!isAlertShown) {
           isAlertShown = true;
-
           alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại");
-
           document.location.href = "/dang-nhap";
           Cookies.remove("refreshToken");
           Cookies.remove("user");

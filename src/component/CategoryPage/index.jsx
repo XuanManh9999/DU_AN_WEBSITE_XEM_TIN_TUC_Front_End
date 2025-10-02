@@ -19,52 +19,8 @@ const CategoryPage = () => {
 
     // Parse category and subcategory from pathname
     useEffect(() => {
-        const pathname = location.pathname;
-
-        // Extract category and subcategory from pathname
-        if (pathname.startsWith('/tin-tuc')) {
-            setCategory('tin-tuc');
-            if (pathname === '/tin-tuc/moi-nhat') setSubcategory('moi-nhat');
-            else if (pathname === '/tin-tuc/tin-nong') setSubcategory('tin-nong');
-            else if (pathname === '/tin-tuc/trong-nuoc') setSubcategory('trong-nuoc');
-            else if (pathname === '/tin-tuc/quoc-te') setSubcategory('quoc-te');
-            else setSubcategory('');
-        } else if (pathname.startsWith('/the-thao')) {
-            setCategory('the-thao');
-            if (pathname === '/the-thao/bong-da') setSubcategory('bong-da');
-            else if (pathname === '/the-thao/bong-ro') setSubcategory('bong-ro');
-            else if (pathname === '/the-thao/tennis') setSubcategory('tennis');
-            else if (pathname === '/the-thao/khac') setSubcategory('khac');
-            else setSubcategory('');
-        } else if (pathname.startsWith('/cong-nghe')) {
-            setCategory('cong-nghe');
-            if (pathname === '/cong-nghe/dien-thoai') setSubcategory('dien-thoai');
-            else if (pathname === '/cong-nghe/laptop') setSubcategory('laptop');
-            else if (pathname === '/cong-nghe/ai-tech') setSubcategory('ai-tech');
-            else if (pathname === '/cong-nghe/gaming') setSubcategory('gaming');
-            else setSubcategory('');
-        } else if (pathname.startsWith('/kinh-doanh')) {
-            setCategory('kinh-doanh');
-            if (pathname === '/kinh-doanh/chung-khoan') setSubcategory('chung-khoan');
-            else if (pathname === '/kinh-doanh/ngan-hang') setSubcategory('ngan-hang');
-            else if (pathname === '/kinh-doanh/bat-dong-san') setSubcategory('bat-dong-san');
-            else if (pathname === '/kinh-doanh/khoi-nghiep') setSubcategory('khoi-nghiep');
-            else setSubcategory('');
-        } else if (pathname.startsWith('/giai-tri')) {
-            setCategory('giai-tri');
-            if (pathname === '/giai-tri/phim-anh') setSubcategory('phim-anh');
-            else if (pathname === '/giai-tri/am-nhac') setSubcategory('am-nhac');
-            else if (pathname === '/giai-tri/sao-viet') setSubcategory('sao-viet');
-            else if (pathname === '/giai-tri/thoi-trang') setSubcategory('thoi-trang');
-            else setSubcategory('');
-        } else if (pathname.startsWith('/doi-song')) {
-            setCategory('doi-song');
-            if (pathname === '/doi-song/suc-khoe') setSubcategory('suc-khoe');
-            else if (pathname === '/doi-song/gia-dinh') setSubcategory('gia-dinh');
-            else if (pathname === '/doi-song/am-thuc') setSubcategory('am-thuc');
-            else if (pathname === '/doi-song/du-lich') setSubcategory('du-lich');
-            else setSubcategory('');
-        }
+        const pathname = location.pathname.replace("/", "") ;
+        setCategory(pathname);
     }, [location.pathname]);
 
     // Get current page from URL params

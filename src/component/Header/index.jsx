@@ -40,58 +40,6 @@ export default function Header() {
   const searchRef = useRef(null);
   const searchInputRef = useRef(null);
 
-  // Mock search data - trong thực tế sẽ từ API
-  const mockArticles = [
-    {
-      id: 1,
-      title: "Đảm bảo cấp nước sạch trong mùa mưa",
-      category: "Tin tức",
-      slug: "dam-bao-cap-nuoc-sach-trong-mua-mua",
-      image: "https://picsum.photos/100/80?random=1"
-    },
-    {
-      id: 2,
-      title: "Công nghệ lọc nước tiên tiến nhất hiện nay",
-      category: "Công nghệ",
-      slug: "cong-nghe-loc-nuoc-tien-tien-nhat-hien-nay",
-      image: "https://picsum.photos/100/80?random=2"
-    },
-    {
-      id: 3,
-      title: "Hệ thống cấp nước thông minh cho thành phố",
-      category: "Smart City",
-      slug: "he-thong-cap-nuoc-thong-minh-cho-thanh-pho",
-      image: "https://picsum.photos/100/80?random=3"
-    },
-    {
-      id: 4,
-      title: "Quy trình xử lý nước thải công nghiệp mới nhất",
-      category: "Môi trường",
-      slug: "quy-trinh-xu-ly-nuoc-thai-cong-nghiep-moi-nhat",
-      image: "https://picsum.photos/100/80?random=4"
-    },
-    {
-      id: 5,
-      title: "SAWACO: Đổi mới sáng tạo và chuyển đổi số",
-      category: "Chuyển đổi số",
-      slug: "sawaco-doi-moi-sang-tao-va-chuyen-doi-so",
-      image: "https://picsum.photos/100/80?random=5"
-    },
-    {
-      id: 6,
-      title: "Ứng dụng AI trong kiểm soát chất lượng nước",
-      category: "AI",
-      slug: "ung-dung-ai-trong-kiem-soat-chat-luong-nuoc",
-      image: "https://picsum.photos/100/80?random=6"
-    },
-    {
-      id: 7,
-      title: "Triển khai công nghệ IoT trong hệ thống cấp nước",
-      category: "IoT",
-      slug: "trien-khai-cong-nghe-iot-trong-he-thong-cap-nuoc",
-      image: "https://picsum.photos/100/80?random=7"
-    }
-  ];
 
   // Search function using real API
   const searchArticles = async (term) => {
@@ -139,14 +87,12 @@ export default function Header() {
 
   useEffect(() => {
     const fetchDataCategories = async () => {
-      if (localStorage.getItem("categories")) {
-        setDataCategories(JSON.parse(localStorage.getItem("categories")));
+      const response = await getAllCategories();
+      if (response?.data) {
+        setDataCategories(response?.data);
+        localStorage.setItem("categories", JSON.stringify(response?.data));
       } else {
-        const response = await getAllCategories();
-        if (response?.data) {
-          setDataCategories(response?.data);
-          localStorage.setItem("categories", JSON.stringify(response?.data));
-        }
+        console.error("Đã xảy ra lỗi khi gọi api lấy category")
       }
     };
     fetchDataCategories();
