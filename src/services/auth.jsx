@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // const BASE_URL = "http://localhost:8080/auth";
-const BASE_URL = "https://codezen.io.vn";
+const BASE_URL = "https://codezen.io.vn/auth";
 export const login = async (dataLogin) => {
     try {
         const response = await axios.post(`${BASE_URL}/access`, dataLogin);
@@ -13,7 +13,7 @@ export const login = async (dataLogin) => {
 
 export const register = async (dataRegister) => {
     try {
-        const response = await axios.post(`${BASE_URL}/auth/register`, dataRegister);
+        const response = await axios.post(`${BASE_URL}/register`, dataRegister);
         return response.data;
     } catch (error) {
         return error?.response?.data;
@@ -23,7 +23,7 @@ export const register = async (dataRegister) => {
 export const refreshToken = async (refreshToken) => {
     try {
         const response = await axios.post(
-            `${BASE_URL}/auth/refresh`,
+            `${BASE_URL}/refresh`,
             {},
             {
                 headers: {
@@ -67,7 +67,7 @@ export const verifyOtpRegister = async (email, otp) => {
 export const oauthLogin = async (dataLogin) => {
     try {
         const response = await axios.post(
-            `${BASE_URL}/auth/oauth/login`,
+            `${BASE_URL}/oauth/login`,
             dataLogin
         );
         return response?.data;
