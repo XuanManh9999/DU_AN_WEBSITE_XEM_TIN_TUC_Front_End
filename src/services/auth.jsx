@@ -67,7 +67,7 @@ export const verifyOtpRegister = async (email, otp) => {
 export const oauthLogin = async (dataLogin) => {
     try {
         const response = await axios.post(
-            "${BASE_URL}/auth/oauth/login",
+            `${BASE_URL}/auth/oauth/login`,
             dataLogin
         );
         return response?.data;
