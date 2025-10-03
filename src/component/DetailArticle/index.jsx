@@ -131,7 +131,7 @@ export default function DetailArticle() {
         if (!article) return;
 
         // Cập nhật title
-        document.title = `${article.title} - Công ty Cổ phần Cấp nước Tân Hòa`;
+        document.title = `${article.title} - 365news`;
 
         // Cập nhật Open Graph tags
         const ogTags = {
@@ -140,7 +140,7 @@ export default function DetailArticle() {
             'og:image': article.thumbnail || '/logo-news.svg',
             'og:url': window.location.href,
             'og:type': 'article',
-            'og:site_name': 'Công ty Cổ phần Cấp nước Tân Hòa',
+            'og:site_name': '365news',
             'og:locale': 'vi_VN'
         };
 

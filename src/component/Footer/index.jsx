@@ -14,12 +14,12 @@ export default function Footer() {
                 className="h-12 w-auto mr-3 rounded"
               />
               <div>
-                <div className="text-lg font-bold text-blue-400">CÔNG TY CỔ PHẦN CẤP NƯỚC TÂN HÒA</div>
-                <div className="text-sm text-red-400">Nước Sạch Cho Mọi Nhà</div>
+                <div className="text-lg font-bold text-blue-400">365news</div>
+                <div className="text-sm text-red-400">Tin tức nóng cho mọi nhà</div>
               </div>
             </div>
             <p className="text-gray-300 leading-relaxed mb-4">
-              Công ty Cổ phần Cấp nước Tân Hòa - Đơn vị cung cấp nước sạch hàng đầu. Chúng tôi cam kết mang đến dịch vụ cấp nước an toàn, liên tục và chất lượng cho cộng đồng.
+              365news - Đơn vị cung cấp tin tức nóng hàng ngày
             </p>
             <div className="flex space-x-4">
               <a href="https://www.facebook.com/tanhoawater" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white transition-colors duration-300">
@@ -78,10 +78,10 @@ export default function Footer() {
         <div className="border-t border-gray-700 mt-8 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-300 text-sm">
-              © {new Date().getFullYear()} Công ty Cổ phần Cấp nước Tân Hòa. Tất cả quyền được bảo lưu.
+              © {new Date().getFullYear()} 365news. Tất cả quyền được bảo lưu.
             </p>
             <p className="text-gray-300 text-sm mt-2 md:mt-0">
-              Thiết kế & phát triển bởi <span className="text-blue-400">Đội ngũ Tân Hòa</span>
+              Thiết kế & phát triển bởi <span className="text-blue-400">Dũng HSB</span>
             </p>
           </div>
         </div>

@@ -239,7 +239,7 @@ export default function Register() {
             <h1 className="text-4xl xl:text-5xl font-bold mb-6 leading-tight">
               Tham gia cộng đồng
               <br />
-              <span className="text-yellow-300">Công ty Cổ phần Cấp nước Tân Hòa</span>
+              <span className="text-yellow-300">365news</span>
             </h1>
             <p className="text-xl opacity-90 mb-8 leading-relaxed">
               Tạo tài khoản miễn phí để trải nghiệm đầy đủ các tính năng và nhận

@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:8080/auth";
-
+// const BASE_URL = "http://localhost:8080/auth";
+const BASE_URL = "https://codezen.io.vn";
 export const login = async (dataLogin) => {
     try {
         const response = await axios.post(`${BASE_URL}/access`, dataLogin);

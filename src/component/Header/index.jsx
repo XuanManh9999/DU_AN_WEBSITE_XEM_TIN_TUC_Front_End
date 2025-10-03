@@ -250,7 +250,7 @@ export default function Header() {
               <div className="w-12 h-12 rounded-full overflow-hidden shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:scale-105">
                 <img
                   src="/z6838744741305_a9a0407315b3348d84d18b1d941ee3ad.jpg"
-                  alt="Logo Công ty Cổ phần Cấp nước Tân Hòa"
+                  alt="Logo 365news"
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     e.target.src = "data:image/svg+xml,%3Csvg width='48' height='48' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='6' fill='%23374151' text-anchor='middle' dy='.3em'%3ELogo%3C/text%3E%3C/svg%3E";
@@ -262,10 +262,10 @@ export default function Header() {
             {/* Company Info */}
             <div className="flex flex-col">
               <h1 className="text-xl font-bold text-blue-800 leading-tight">
-                CÔNG TY CỔ PHẦN CẤP NƯỚC TÂN HÒA
+                365news
               </h1>
               <p className="text-xs font-semibold text-red-600 leading-tight">
-                Nước Sạch Cho Mọi Nhà
+                Tin tức mới cho mọi nhà
               </p>
             </div>
           </div>
