@@ -1,7 +1,7 @@
 import axios from "axios";
 import axiosInstance from "../config/ConfigAxios";
 
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = "https://codezen.io.vn";
 
 export const getAllArticles = async (limit = 10, offset = 0, sortBy = "id", order = "desc") => {
     try {
