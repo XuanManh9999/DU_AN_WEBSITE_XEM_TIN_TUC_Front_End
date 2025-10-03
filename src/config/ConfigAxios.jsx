@@ -8,7 +8,8 @@ export const setAxiosInactivityHandler = (resetFn) => {
 };
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:8080",
+  // baseURL: "http://localhost:8080",
+  baseURL: "http://160.250.247.172:8080",
 });
 
 let isAlertShown = false;

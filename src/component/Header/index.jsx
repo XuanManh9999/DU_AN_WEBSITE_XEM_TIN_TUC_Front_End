@@ -265,7 +265,7 @@ export default function Header() {
                 365news
               </h1>
               <p className="text-xs font-semibold text-red-600 leading-tight">
-                Nước Sạch Cho Mọi Nhà
+                Tin tức mới cho mọi nhà
               </p>
             </div>
           </div>
