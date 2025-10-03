@@ -154,11 +154,10 @@ export default function Login() {
             <h1 className="text-4xl xl:text-5xl font-bold mb-6 leading-tight">
               Chào mừng đến với
               <br />
-              <span className="text-yellow-300">Công ty Cổ phần Cấp nước Tân Hòa</span>
+              <span className="text-yellow-300">365news</span>
             </h1>
             <p className="text-xl opacity-90 mb-8 leading-relaxed">
-              Nước Sạch Cho Mọi Nhà - Cung cấp dịch vụ cấp nước chất lượng cao,
-              tin tức và thông báo mới nhất về hệ thống cấp nước
+              Tin tức và thông báo mới nhất về hệ thống cấp nước
             </p>
             <div className="flex items-center justify-center space-x-8 text-sm">
               <div className="text-center">
