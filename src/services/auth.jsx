@@ -13,7 +13,7 @@ export const login = async (dataLogin) => {
 
 export const register = async (dataRegister) => {
     try {
-        const response = await axios.post(`http://localhost:8080/auth/register`, dataRegister);
+        const response = await axios.post(`${BASE_URL}/auth/register`, dataRegister);
         return response.data;
     } catch (error) {
         return error?.response?.data;
@@ -23,7 +23,7 @@ export const register = async (dataRegister) => {
 export const refreshToken = async (refreshToken) => {
     try {
         const response = await axios.post(
-            `http://localhost:8080/auth/refresh`,
+            `${BASE_URL}/auth/refresh`,
             {},
             {
                 headers: {
@@ -67,7 +67,7 @@ export const verifyOtpRegister = async (email, otp) => {
 export const oauthLogin = async (dataLogin) => {
     try {
         const response = await axios.post(
-            "http://localhost:8080/auth/oauth/login",
+            "${BASE_URL}/auth/oauth/login",
             dataLogin
         );
         return response?.data;
